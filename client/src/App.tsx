@@ -8,7 +8,7 @@ function App() {
   const [message, setMessage] = useState("");
 
   const testClick = async () => {
-    axios.get("/api/helloworld").then((res) => {
+    axios.get("/api/login/test").then((res) => {
       setMessage(res.data.message);
     });
   };
