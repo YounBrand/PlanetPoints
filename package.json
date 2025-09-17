@@ -1,7 +1,7 @@
 {
-  "name": "preproute",
+  "name": "planetpoints",
   "version": "1.0.0",
-  "description": "Route Planner",
+  "description": "Sustainability Tracker",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
