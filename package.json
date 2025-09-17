@@ -1,13 +1,13 @@
 {
-  "name": "preproute",
+  "name": "planetpoints",
   "version": "1.0.0",
-  "description": "Route Planner",
+  "description": "Sustainability Tracker",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
     "start": "concurrently \"npm run backend\" \"npm run client\"",
-    "backend": "nodemon server/src/server.js",
-    "client": "npm --prefix client run dev",
+    "backend": "cd server && tsx watch src/server.ts",
+    "client": "cd client && npm run dev",
     "test": "vitest",
     "test:watch": "vitest --watch"
   },
@@ -15,12 +15,14 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^5.1.0"
+    "fastify": "^5.6.0"
   },
   "devDependencies": {
+    "@types/node": "^24.5.1",
     "concurrently": "^9.2.1",
-    "nodemon": "^3.1.10",
     "supertest": "^7.1.4",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }
 }
