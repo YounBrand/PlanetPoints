@@ -4,7 +4,7 @@ import loginRoutes from "./routes/authRoutes.js";
 const server = Fastify();
 const port = Number(process.env.PORT) || 3000;
 
-await server.register(loginRoutes);
+server.register(loginRoutes);
 
 server.listen({ port: port }, function (err) {
   console.log(`Server started and listening on port ${port}.`);
@@ -13,3 +13,5 @@ server.listen({ port: port }, function (err) {
     process.exit(1);
   }
 });
+
+export default server;
