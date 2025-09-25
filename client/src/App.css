@@ -1,42 +1,62 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.pp-app { display: flex; flex-direction: column; min-height: 100dvh; }
+.pp-container { max-width: 1024px; margin: 0 auto; padding: 0 20px; }
+
+/* Nav */
+.pp-nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px);
+  background: color-mix(in sRGB, var(--panel) 85%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+.pp-nav .pp-container { display: flex; align-items: center; gap: 16px; padding: 12px 20px; }
+.pp-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.pp-links { margin-left: auto; display: none; gap: 16px; color: var(--muted); }
+.pp-links a:hover { color: var(--text); }
+.pp-actions { display: flex; gap: 8px; align-items: center; }
+.dev-msg { color: var(--muted); font-size: 12px; }
+
+/* Buttons */
+.pp-btn { border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  padding: 8px 12px; border-radius: 10px; cursor: pointer; box-shadow: var(--shadow);
+}
+.pp-btn:hover { filter: brightness(1.03); }
+.pp-btn.primary { background: linear-gradient(180deg, var(--accent-2), #1d4ed8); color: white; border: none; }
+.pp-btn.ghost { background: transparent; }
+.pp-btn.outline { background: transparent; border-color: var(--ring); }
+
+/* Hero */
+.pp-hero { padding: 56px 0; }
+.hero-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: center; }
+.hero-copy h1 { font-size: clamp(28px, 5vw, 48px); line-height: 1.05; margin: 0 0 12px; }
+.accent { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-sub { color: var(--muted); margin: 0 0 16px; }
+.cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Preview card (tiny) */
+.hero-card { display: grid; justify-items: center; }
+.score-card { width: min(380px, 100%); background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px; box-shadow: var(--shadow);
+}
+.score-top { display: flex; justify-content: space-between; align-items: baseline; color: var(--muted); margin-bottom: 8px; }
+.score-top strong { color: var(--text); }
+.score-list { list-style: none; margin: 10px 0 14px; padding: 0; display: grid; gap: 8px; }
+.score-list li { display:flex; justify-content: space-between; background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+.score-progress .bar { height: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.score-progress .fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.bar-caption { display:flex; justify-content: space-between; margin-top: 6px; color: var(--muted); }
+
+/* Focus area chips */
+.pp-section { padding: 40px 0; }
+.feature-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.feature-pill { background: var(--panel); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 12px; border-radius: 999px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
+/* Footer */
+.pp-footer { margin-top: auto; border-top: 1px solid var(--border); background: var(--panel-2); }
+.footer-grid { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
+.foot-brand { display: flex; align-items: center; gap: 8px; }
+.muted { color: var(--muted); }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
+/* Responsive */
+@media (min-width: 860px){ .pp-links { display: flex; } }
+@media (max-width: 900px){ .hero-grid { grid-template-columns: 1fr; } }
