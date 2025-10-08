@@ -1,8 +1,15 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import Fastify from "fastify";
 import loginRoutes from "./routes/authRoutes.js";
+import connectDB from "./modules/db.js";
 
 const server = Fastify();
 const port = Number(process.env.PORT) || 3000;
+
+// Connect to DB
+await connectDB();
 
 server.register(loginRoutes);
 

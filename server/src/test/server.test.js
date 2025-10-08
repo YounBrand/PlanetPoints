@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { test, expect } from "vitest";
 import request from "supertest";
 import server from "../server";
