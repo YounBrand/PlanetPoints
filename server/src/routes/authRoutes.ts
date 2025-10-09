@@ -5,19 +5,6 @@ import FastifyPassport from "@fastify/passport";
 
 const routes = async (fastify: FastifyInstance) => {
   fastify.get("/api/login/test", async (req, reply) => {
-    // Testing db write
-    const newUser = new User({
-      username: "PleaseWork",
-      password: "VerySecretPassword",
-      email: "coolemail@gmail.com",
-      name: "John Doe",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    await newUser.save();
-    console.log("User saved");
-
     return reply.code(200).send({ message: "hello world" });
   });
 
@@ -49,7 +36,7 @@ const routes = async (fastify: FastifyInstance) => {
     })
 
     await newUser.save();
-    return reply.code(200).send({message: "Patient successfully created"});
+    return reply.code(200).send({message: "User successfully created"});
   })
 
   fastify.post(
