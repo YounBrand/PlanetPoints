@@ -7,7 +7,7 @@ beforeAll(async () => {
   process.env.NODE_ENV = "test";
   await server.ready();
 
-  const dbUri = process.env.MONGODB_URI || "mongodb://localhost:27017/testdb";
+  const dbUri = process.env.DATABASE_URL || "mongodb://localhost:27017/testdb";
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(dbUri);
   }
