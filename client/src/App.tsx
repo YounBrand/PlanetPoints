@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import "./App.css";
 
 type Theme = "light" | "dark";
+type TabKey = "overview" | "leaderboard" | "quizzes";
 
 function App() {
-  const [message, setMessage] = useState("");
   const [theme, setTheme] = useState<Theme>("dark");
+  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  // Wire this to your auth later
+  const [isLoggedIn] = useState(false);
 
-  // Respect system preference on first load, then use saved choice
   useEffect(() => {
     const saved = localStorage.getItem("pp-theme") as Theme | null;
     if (saved) {
@@ -26,103 +27,131 @@ function App() {
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
-  const testClick = async () => {
-    try {
-      const res = await axios.get("/api/login/test");
-      setMessage(res.data.message ?? "OK");
-    } catch {
-      setMessage("Backend not reachable");
-    }
+  const goLogin = () => {
+    // swap with your router navigate('/login') when ready
+    window.location.href = "/login";
   };
 
   return (
     <div className="pp-app">
       {/* Top Bar / Nav */}
       <header className="pp-nav">
-        <div className="pp-container">
+        <div className="pp-container pp-navbar">
+          {/* Left: Brand */}
           <div className="pp-brand">
             <span className="pp-logo" aria-hidden>🌍</span>
             <span className="pp-title">Planet Points</span>
           </div>
 
-          <nav className="pp-links">
-            <a href="#concept">Concept</a>
-            <a href="#features">Focus areas</a>
-          </nav>
-
+          {/* Right: Actions */}
           <div className="pp-actions">
             <button className="pp-btn ghost" onClick={toggleTheme}>
               {theme === "dark" ? "Light mode" : "Dark mode"}
             </button>
-            <button className="pp-btn outline" onClick={testClick}>
-              Test backend
-            </button>
-            <span className="dev-msg">{message && `→ ${message}`}</span>
+            <button className="pp-btn primary" onClick={goLogin}>Login</button>
           </div>
         </div>
       </header>
 
-      {/* Hero (concept-only) */}
-      <section id="concept" className="pp-hero">
-        <div className="pp-container hero-grid">
-          <div className="hero-copy">
-            <h1>
-              Track small wins, <br />
-              <span className="accent">grow your Planet Points.</span>
-            </h1>
-            <p className="hero-sub">
-              Concept: log simple eco-actions (bike, bus, plant-based meal, recycle) and earn points.
-              Weekly goal + friendly leaderboards. Keep it fun, low-friction.
-            </p>
-
-            <div className="cta-row">
-              <button className="pp-btn primary">Prototype: Start</button>
-              <button className="pp-btn ghost">See leaderboard (mock)</button>
-            </div>
+      {/* Main content with centered Tabs */}
+      <main className="pp-container pp-main">
+        <section className="pp-tabs">
+          <div role="tablist" aria-label="Explore Planet Points" className="pp-tablist">
+            <button
+              role="tab"
+              aria-selected={activeTab === "overview"}
+              className="pp-tab"
+              onClick={() => setActiveTab("overview")}
+            >
+              Overview
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === "leaderboard"}
+              className="pp-tab"
+              onClick={() => setActiveTab("leaderboard")}
+            >
+              Leaderboard
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === "quizzes"}
+              className="pp-tab"
+              onClick={() => setActiveTab("quizzes")}
+            >
+              Quizzes
+            </button>
           </div>
 
-          {/* Minimal preview card */}
-          <div className="hero-card">
-            <div className="score-card">
-              <div className="score-top">
-                <span>Your week</span>
-                <strong>+ 180 pts</strong>
+          <div className="pp-tabpanes">
+            {activeTab === "overview" && (
+              <div role="tabpanel" className="pp-pane">
+                <h2 className="pp-h2">What you can do</h2>
+                <p className="pp-muted">
+                  Track daily sustainable actions, compete on the leaderboard, and test your eco-knowledge with quick quizzes.
+                </p>
+                <div className="pp-cards">
+                  <article className="pp-card">
+                    <h3>Track Activities</h3>
+                    <p>Log biking, recycling, reduced energy use, and more to earn points.</p>
+                  </article>
+                  <article className="pp-card">
+                    <h3>Compete</h3>
+                    <p>Climb the leaderboard with friends, clubs, and classes.</p>
+                  </article>
+                  <article className="pp-card">
+                    <h3>Learn</h3>
+                    <p>Take bite-sized quizzes to improve your sustainability score.</p>
+                  </article>
+                </div>
+                {!isLoggedIn && (
+                  <div className="pp-cta">
+                    <button className="pp-btn primary" onClick={goLogin}>Create an account / Login</button>
+                  </div>
+                )}
               </div>
-              <ul className="score-list">
-                <li><span>🚲 Biked</span><strong>+40</strong></li>
-                <li><span>🥗 Plant meal</span><strong>+25</strong></li>
-                <li><span>🚌 Bus ride</span><strong>+30</strong></li>
-              </ul>
-              <div className="score-progress">
-                <div className="bar"><div className="fill" style={{ width: "45%" }} /></div>
-                <div className="bar-caption"><span>Goal</span><strong>45%</strong></div>
+            )}
+
+            {activeTab === "leaderboard" && (
+              <div role="tabpanel" className="pp-pane">
+                <h2 className="pp-h2">Leaderboard</h2>
+                {!isLoggedIn ? (
+                  <>
+                    <p className="pp-muted">See who’s leading the charge. Log in to view and join your groups.</p>
+                    <div className="pp-cta-row">
+                      <button className="pp-btn" onClick={() => alert("Navigate to public leaderboard preview")}>
+                        View public preview
+                      </button>
+                      <button className="pp-btn primary" onClick={goLogin}>Login to join</button>
+                    </div>
+                  </>
+                ) : (
+                  <p>/* your leaderboard component here */</p>
+                )}
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            )}
 
-      {/* Very light “focus areas” strip */}
-      <section id="features" className="pp-section">
-        <div className="pp-container feature-row">
-          <div className="feature-pill">📊 Track</div>
-          <div className="feature-pill">🎯 Weekly goal</div>
-          <div className="feature-pill">🏆 Leaderboard</div>
-          <div className="feature-pill">🐣 Pet (later)</div>
-          <div className="feature-pill">� barcode scan (later)</div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="pp-footer">
-        <div className="pp-container footer-grid">
-          <div className="foot-brand">
-            <span className="pp-logo" aria-hidden>🌍</span>
-            <strong>Planet Points</strong>
+            {activeTab === "quizzes" && (
+              <div role="tabpanel" className="pp-pane">
+                <h2 className="pp-h2">Quizzes</h2>
+                {!isLoggedIn ? (
+                  <>
+                    <p className="pp-muted">Test your eco-IQ. Log in to save progress and earn points.</p>
+                    <div className="pp-cta-row">
+                      <button className="pp-btn" onClick={() => alert("Navigate to quiz sample")}>
+                        Try a sample quiz
+                      </button>
+                      <button className="pp-btn primary" onClick={goLogin}>Login to start</button>
+                    </div>
+                  </>
+                ) : (
+                  <p>/* your quizzes component here */</p>
+                )}
+              </div>
+            )}
           </div>
-          <span className="muted">Concept preview</span>
-        </div>
-      </footer>
+        </section>
+      </main>
     </div>
   );
 }
