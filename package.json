@@ -22,7 +22,8 @@
     "fastify": "^5.6.0",
     "fastify-secure-session": "^3.1.0",
     "mongoose": "^8.19.1",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "react-router-dom": "^7.9.4"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
