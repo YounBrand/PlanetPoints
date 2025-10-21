@@ -1,5 +1,5 @@
 import { Strategy as LocalStrategy } from "passport-local";
-import User from "../schemas/User.js";
+import { User } from "../schemas/User.js";
 import bcrypt from "bcrypt";
 
 

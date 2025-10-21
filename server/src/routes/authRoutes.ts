@@ -1,14 +1,32 @@
 import type { FastifyInstance } from "fastify";
-import User from "../schemas/User.js";
+import {User} from "../schemas/User.js";
 import bcrypt from "bcrypt";
 import FastifyPassport from "@fastify/passport";
+import { verifyApiKey } from "../util/authUtil.js";
 
 const routes = async (fastify: FastifyInstance) => {
   fastify.get("/api/login/test", async (req, reply) => {
+    const key = req.headers["x-api-key"];
+    if (!verifyApiKey(key as string)) return reply.code(403).send({ message: "Forbidden" }); 
+
     return reply.code(200).send({ message: "hello world" });
   });
 
+  fastify.get("/api/auth/status", async (req, reply) => {
+
+    const key = req.headers["x-api-key"];
+    if (!verifyApiKey(key as string)) return reply.code(403).send({ message: "Forbidden" }); 
+
+    if (req.isAuthenticated()) return reply.code(200).send({ loggedIn: true, user: req.user})
+
+    return reply.code(200).send({loggedIn: false});
+  })
+
   fastify.post("/api/register", async (req, reply) => {
+
+    const key = req.headers["x-api-key"];
+    if (!verifyApiKey(key as string)) return reply.code(403).send({ message: "Forbidden" }); 
+
     const { username, password, email, name } = req.body as {
       username: string;
       password: string;
@@ -42,6 +60,10 @@ const routes = async (fastify: FastifyInstance) => {
   fastify.post(
     "/api/login",
     {
+      preHandler: async (req, reply) => {
+        const key = req.headers["x-api-key"];
+        if (!verifyApiKey(key as string)) return reply.code(403).send({ message: "Forbidden" }); 
+      },
       preValidation: FastifyPassport.authenticate("identity", {
         session: false,
         authInfo: false,
