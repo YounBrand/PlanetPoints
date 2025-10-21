@@ -3,6 +3,7 @@ dotenv.config();
 
 import Fastify from "fastify";
 import loginRoutes from "./routes/authRoutes.js";
+import activitiesRoute from "./routes/activitiesRoutes.js";
 import connectDB from "./modules/db.js";
 import fastifyPassport from "@fastify/passport";
 import fastifySecureSession from "@fastify/secure-session";
@@ -24,6 +25,7 @@ server.register(fastifyPassport.secureSession());
 fastifyPassport.use("identity", identityStrategy);
 
 server.register(loginRoutes);
+server.register(activitiesRoute);
 
 server.listen({ port: port}, function (err) {
   console.log(`Server started and listening on port ${port}.`);
