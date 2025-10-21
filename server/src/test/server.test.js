@@ -23,12 +23,14 @@ describe("Server Tests", () => {
     await User.deleteMany({ username: userData.username });
   });
 
+  // Simple GET test
   test("GET /api/login/test returns 'hello world'", async () => {
     const res = await request(server.server).get("/api/login/test").set("x-api-key", process.env.API_KEY);
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe("hello world");
   });
 
+  // Test user registration
   test("POST /api/register should successfully create a new user", async () => {
     const registerRes = await request(server.server)
       .post("/api/register")
@@ -45,6 +47,7 @@ describe("Server Tests", () => {
     expect(userInDb).toBeTruthy();
   });
 
+  // Test user login
   test("POST /api/login should successfully authenticate with valid credentials", async () => {
     // Register user first
     await request(server.server).post("/api/register").set("x-api-key", process.env.API_KEY).send(userData);
@@ -67,6 +70,7 @@ describe("Server Tests", () => {
     expect(res.body.user).toBeDefined();
   });
 
+  // Test invalid login
   test("POST /api/login should fail with invalid password", async () => {
     // Register user first
     await request(server.server).post("/api/register").set("x-api-key", process.env.API_KEY).send(userData);
@@ -84,6 +88,7 @@ describe("Server Tests", () => {
     expect(res.body.message).toMatch(/invalid|wrong|password/i);
   });
 
+  // Test nonexistent user login
   test("POST /api/login should fail with nonexistent user", async () => {
     const res = await request(server.server)
       .post("/api/login")
