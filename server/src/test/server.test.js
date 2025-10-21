@@ -5,7 +5,7 @@ import { describe, test, expect, afterEach } from "vitest";
 import request from "supertest";
 import server from "../server";
 import connectDB from "../modules/db.js";
-import User from "../schemas/User.js";
+import {User} from "../schemas/User.js";
 
 // Ensure DB is connected before tests
 await connectDB();
@@ -24,7 +24,7 @@ describe("Server Tests", () => {
   });
 
   test("GET /api/login/test returns 'hello world'", async () => {
-    const res = await request(server.server).get("/api/login/test");
+    const res = await request(server.server).get("/api/login/test").set("x-api-key", process.env.API_KEY);
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe("hello world");
   });
@@ -32,6 +32,7 @@ describe("Server Tests", () => {
   test("POST /api/register should successfully create a new user", async () => {
     const registerRes = await request(server.server)
       .post("/api/register")
+      .set("x-api-key", process.env.API_KEY)
       .send(userData);
 
     expect(registerRes.statusCode).toBe(200);
@@ -46,11 +47,12 @@ describe("Server Tests", () => {
 
   test("POST /api/login should successfully authenticate with valid credentials", async () => {
     // Register user first
-    await request(server.server).post("/api/register").send(userData);
+    await request(server.server).post("/api/register").set("x-api-key", process.env.API_KEY).send(userData);
 
     // Then login
     const res = await request(server.server)
       .post("/api/login")
+      .set("x-api-key", process.env.API_KEY)
       .send({
         identity: userData.username,
         password: userData.password,
@@ -67,11 +69,12 @@ describe("Server Tests", () => {
 
   test("POST /api/login should fail with invalid password", async () => {
     // Register user first
-    await request(server.server).post("/api/register").send(userData);
+    await request(server.server).post("/api/register").set("x-api-key", process.env.API_KEY).send(userData);
 
     // Try to login with wrong password
     const res = await request(server.server)
       .post("/api/login")
+      .set("x-api-key", process.env.API_KEY)
       .send({
         identity: userData.username,
         password: "wrongpassword",
@@ -84,6 +87,7 @@ describe("Server Tests", () => {
   test("POST /api/login should fail with nonexistent user", async () => {
     const res = await request(server.server)
       .post("/api/login")
+      .set("x-api-key", process.env.API_KEY)
       .send({
         identity: "nonexistentuser",
         password: "password123",
