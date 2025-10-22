@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import "./App.css";
 
 type Theme = "light" | "dark";
@@ -14,6 +15,7 @@ interface ActivityLog {
 }
 
 function App() {
+  const navigate = useNavigate();
   const [theme, setTheme] = useState<Theme>("dark");
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -44,7 +46,7 @@ function App() {
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   const goLogin = () => {
-    window.location.href = "/login";
+    navigate('/login');
   };
 
   const openActivityLog = (type: ActivityType) => {

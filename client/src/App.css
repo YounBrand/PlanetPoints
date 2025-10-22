@@ -110,6 +110,20 @@
   .pp-tablist { width: 100%; overflow-x: auto; }
 }
 
+/* ---- Inputs ---- */
+.pp-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-1);
+  color: var(--text);
+}
+
+.pp-input:focus {
+  outline: 2px solid var(--ring);
+}
+
 /* ---- Dev Toggle ---- */
 .pp-dev-toggle {
   position: fixed;
