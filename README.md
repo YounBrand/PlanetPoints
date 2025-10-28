@@ -9,14 +9,11 @@ Make sure you have Node.js and npm installed on your local machine.
     ```sh
     git clone https://github.com/YounBrand/PlanetPoints
     ```
-2.  Install the project dependencies:
+2. To install dependencies and run the server
     ```sh
-    npm install
-3.  **Start the server:**
-    ```sh
-    npm start
+    bash startup.sh
     ```
-4.  Open your web browser and navigate to `http://localhost:3000`.   
+3.  Open your web browser and navigate to `http://localhost:3000`.   
    
 ## Testing
 To run the automated tests locally use the following command:
