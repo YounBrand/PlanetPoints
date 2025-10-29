@@ -15,6 +15,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@fastify/cors": "^11.1.0",
     "@fastify/passport": "^3.0.2",
     "@fastify/secure-session": "^8.2.0",
     "bcrypt": "^6.0.0",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/fastify-cors": "^0.1.0",
     "@types/node": "^24.5.1",
     "@types/passport-local": "^1.0.38",
     "concurrently": "^9.2.1",
