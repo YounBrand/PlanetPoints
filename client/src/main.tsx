@@ -1,13 +1,18 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
-import LoginPage from './LoginPage'
+import LoginPage from './LoginPage.tsx'
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
-    {/* Make LoginPage the root if you want to work on it */}
-    {/* <LoginPage /> */}
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   </StrictMode>
-);
+)

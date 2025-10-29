@@ -1,12 +1,13 @@
 import "./App.css";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
 
+    const navigate = useNavigate();
+    const goHome = () => navigate('/');
     useEffect(() => { document.documentElement.setAttribute("data-theme", "dark"); }, []);
     
-    const goHome = () => (window.location.href = "/");
-
     return (
         <div className="pp-app">
         <header className="pp-nav">
