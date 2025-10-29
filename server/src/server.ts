@@ -19,9 +19,9 @@ server.register(fastifySecureSession, {
   key: Buffer.from(process.env.SESSION_KEY || "session-key", "hex"),
 });
 
-// Add root route
+// Root route
 server.get('/', async (request, reply) => {
-  reply.send({ status: 'ok', message: 'PlanetPoints API' });
+  return reply.code(200).send({ message: 'PlanetPoints API root' });
 });
 
 server.register(fastifyPassport.initialize());
