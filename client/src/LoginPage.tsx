@@ -1,62 +1,55 @@
 import "./App.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function LoginPage() {
     const navigate = useNavigate();
     
-    // Form state management
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // Navigation handler for brand logo
     const goHome = () => navigate('/');
     
-    // Set dark theme on component mount
     useEffect(() => { 
         document.documentElement.setAttribute("data-theme", "dark"); 
     }, []);
 
-    /**
-     * Handles login form submission
-     * Sends credentials to /api/login endpoint with API key authentication
-     * On success: redirects to home page with active session
-     * On failure: displays error message to user
-     */
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(""); // Clear any previous errors
+
+    const handleSubmitLogin = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setErrorMessage(""); 
         setLoading(true);
 
-        try {
-            // Send login request with credentials and API key
-            const response = await fetch("/api/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-api-key": import.meta.env.VITE_API_KEY || "",
-                },
-                credentials: "include", 
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            // Handle unsuccessful login attempts
-            if (!response.ok) {
-                setError(data.message || "Login failed");
+        axios
+            .post(
+                `${import.meta.env.VITE_API_URL}/api/login`,
+                { identity: email, password }, //expects 'identity' field (username or email)
+                { 
+                    withCredentials: true,
+                    headers: {
+                        "x-api-key": import.meta.env.VITE_API_KEY || "",
+                    }
+                }
+            )
+            .then((response) => {
+                console.log("Login successful:", response.data);
+                //successful login redirect to home page
+                navigate("/", { replace: true });
+            })
+            .catch((error) => {
+                console.error(
+                    "Login failed:",
+                    error.response ? error.response.data : error.message
+                );
+                //error message from server or fallback message
+                setErrorMessage(error.response?.data.message || "Login failed");
+            })
+            .finally(() => {
                 setLoading(false);
-                return;
-            }
-
-            // Successful login - redirect to home page
-            navigate("/");
-        } catch (err) {
-            setError("An error occurred. Please try again.");
-            setLoading(false);
-        }
+            });
     };
     
     return (
@@ -77,9 +70,9 @@ export default function LoginPage() {
                     <h2 className="pp-h2">Welcome Back</h2>
                     <p className="pp-muted">Log in to track your progress and earn Planet Points.</p>
 
-                    <form className="pp-card" style={{ display: "grid", gap: 10 }} onSubmit={handleSubmit}>
+                    <form className="pp-card" style={{ display: "grid", gap: 10 }} onSubmit={handleSubmitLogin}>
                         {/* Error message display - only shown when error exists */}
-                        {error && (
+                        {errorMessage && (
                             <div style={{ 
                                 padding: "10px", 
                                 backgroundColor: "rgba(255, 0, 0, 0.1)", 
@@ -87,21 +80,21 @@ export default function LoginPage() {
                                 borderRadius: "4px",
                                 color: "#ff6b6b"
                             }}>
-                                {error}
+                                {errorMessage}
                             </div>
                         )}
                         
-                        {/* Email input field */}
+                        {/* Username/Email input field */}
                         <label>
-                            Email
+                            Username/Email
                             <input 
-                                type="email" 
+                                type="text" 
                                 className="pp-input" 
-                                placeholder="you@example.com" 
+                                placeholder="username or email" 
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required 
-                                disabled={loading} // Disable during submission
+                                disabled={loading}
                             />
                         </label>
                         
@@ -115,7 +108,7 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required 
-                                disabled={loading} // Disable during submission
+                                disabled={loading}
                             />
                         </label>
                         

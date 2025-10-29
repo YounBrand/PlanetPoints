@@ -8,9 +8,16 @@ import connectDB from "./modules/db.js";
 import fastifyPassport from "@fastify/passport";
 import fastifySecureSession from "@fastify/secure-session";
 import { identityStrategy } from "./modules/passport.js";
+import cors from "@fastify/cors"
 
 const server = Fastify();
 const port = Number(process.env.PORT) || 3000;
+
+server.register(cors, { origin: [
+  'http://localhost:5173'
+],
+credentials: true
+});
 
 // Connect to DB
 await connectDB();
