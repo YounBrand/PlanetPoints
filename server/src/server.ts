@@ -8,15 +8,14 @@ import connectDB from "./modules/db.js";
 import fastifyPassport from "@fastify/passport";
 import fastifySecureSession from "@fastify/secure-session";
 import { identityStrategy } from "./modules/passport.js";
-import cors from "@fastify/cors"
+import cors from "@fastify/cors";
 
 const server = Fastify();
 const port = Number(process.env.PORT) || 3000;
 
-server.register(cors, { origin: [
-  'http://localhost:5173'
-],
-credentials: true
+server.register(cors, {
+  origin: ["http://localhost:5173", "https://planetpoints.onrender.com"],
+  credentials: true,
 });
 
 // Connect to DB
@@ -27,8 +26,8 @@ server.register(fastifySecureSession, {
 });
 
 // Root route
-server.get('/', async (request, reply) => {
-  return reply.code(200).send({ message: 'PlanetPoints API root' });
+server.get("/", async (request, reply) => {
+  return reply.code(200).send({ message: "PlanetPoints API root" });
 });
 
 server.register(fastifyPassport.initialize());
@@ -40,7 +39,7 @@ server.register(loginRoutes);
 server.register(activitiesRoute);
 
 if (process.env.NODE_ENV !== "test") {
-  server.listen({ port: port, host: '0.0.0.0' }, function (err, address) {
+  server.listen({ port: port, host: "0.0.0.0" }, function (err, address) {
     if (err) {
       server.log.error(err);
       process.exit(1);
