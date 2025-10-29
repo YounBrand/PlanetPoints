@@ -39,12 +39,14 @@ fastifyPassport.use("identity", identityStrategy);
 server.register(loginRoutes);
 server.register(activitiesRoute);
 
-server.listen({ port: port}, function (err) {
-  console.log(`Server started and listening on port ${port}.`);
-  if (err) {
-    server.log.error(err);
-    process.exit(1);
-  }
-});
+if (process.env.NODE_ENV !== "test") {
+  server.listen({ port: port, host: '0.0.0.0' }, function (err, address) {
+    if (err) {
+      server.log.error(err);
+      process.exit(1);
+    }
+    console.log(`Server started and listening on ${address}.`);
+  });
+}
 
 export default server;
