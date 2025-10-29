@@ -13,7 +13,7 @@ Make sure you have Node.js and npm installed on your local machine.
     ```sh
     bash startup.sh
     ```
-3.  Open your web browser and navigate to `http://localhost:3000`.   
+3.  Open your web browser and navigate to `http://localhost:5173`.   
    
 ## Testing
 To run the automated tests locally use the following command:
