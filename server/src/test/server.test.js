@@ -2,10 +2,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { describe, test, expect, afterEach } from "vitest";
-import request from "supertest";
-import server from "../server";
+import server from "../server.js";
 import connectDB from "../modules/db.js";
-import {User} from "../schemas/User.js";
+import { User } from "../schemas/User.js";
 
 // Ensure DB is connected before tests
 await connectDB();
@@ -23,82 +22,104 @@ describe("Server Tests", () => {
     await User.deleteMany({ username: userData.username });
   });
 
-  // Simple GET test
+  // -----------------------------
+  // GET /api/login/test
+  // -----------------------------
+  
   test("GET /api/login/test returns 'hello world'", async () => {
-    const res = await request(server.server).get("/api/login/test").set("x-api-key", process.env.API_KEY);
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/login/test",
+      headers: { "x-api-key": process.env.API_KEY },
+    });
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe("hello world");
+    expect(res.json().message).toBe("hello world");
   });
 
-  // Test user registration
-  test("POST /api/register should successfully create a new user", async () => {
-    const registerRes = await request(server.server)
-      .post("/api/register")
-      .set("x-api-key", process.env.API_KEY)
-      .send(userData);
+  // -----------------------------
+  // POST /api/register
+  // -----------------------------
 
-    expect(registerRes.statusCode).toBe(200);
-    expect(registerRes.body).toHaveProperty(
-      "message",
-      "User successfully created"
-    );
+  test("should successfully create a new user", async () => {
+    const res = await server.inject({
+      method: "POST",
+      url: "/api/register",
+      headers: { "x-api-key": process.env.API_KEY },
+      payload: userData,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toHaveProperty("message", "User successfully created");
 
     const userInDb = await User.findOne({ username: userData.username });
     expect(userInDb).toBeTruthy();
   });
 
-  // Test user login
-  test("POST /api/login should successfully authenticate with valid credentials", async () => {
+  // -----------------------------
+  // POST /api/login (valid)
+  // -----------------------------
+
+  test("should authenticate with valid credentials", async () => {
     // Register user first
-    await request(server.server).post("/api/register").set("x-api-key", process.env.API_KEY).send(userData);
+    await server.inject({
+      method: "POST",
+      url: "/api/register",
+      headers: { "x-api-key": process.env.API_KEY },
+      payload: userData,
+    });
 
-    // Then login
-    const res = await request(server.server)
-      .post("/api/login")
-      .set("x-api-key", process.env.API_KEY)
-      .send({
-        identity: userData.username,
-        password: userData.password,
-      });
-
-    if (res.statusCode !== 200) {
-      console.error("Login failed:", res.statusCode, res.body);
-    }
+    // Login
+    const res = await server.inject({
+      method: "POST",
+      url: "/api/login",
+      headers: { "x-api-key": process.env.API_KEY },
+      payload: { identity: userData.username, password: userData.password },
+    });
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty("message", "Login successful");
-    expect(res.body.user).toBeDefined();
+    expect(res.json()).toHaveProperty("message", "Login successful");
+    expect(res.json().user).toBeDefined();
   });
 
-  // Test invalid login
-  test("POST /api/login should fail with invalid password", async () => {
+  // -----------------------------
+  // POST /api/login (invalid password)
+  // -----------------------------
+
+  test("should fail with invalid password", async () => {
     // Register user first
-    await request(server.server).post("/api/register").set("x-api-key", process.env.API_KEY).send(userData);
+    await server.inject({
+      method: "POST",
+      url: "/api/register",
+      headers: { "x-api-key": process.env.API_KEY },
+      payload: userData,
+    });
 
     // Try to login with wrong password
-    const res = await request(server.server)
-      .post("/api/login")
-      .set("x-api-key", process.env.API_KEY)
-      .send({
-        identity: userData.username,
-        password: "wrongpassword",
-      });
+    const res = await server.inject({
+      method: "POST",
+      url: "/api/login",
+      headers: { "x-api-key": process.env.API_KEY },
+      payload: { identity: userData.username, password: "wrongpassword" },
+    });
 
     expect(res.statusCode).toBe(401);
-    expect(res.body.message).toMatch(/invalid|wrong|password/i);
+    expect(res.json().message).toMatch(/invalid|wrong|password/i);
   });
 
-  // Test nonexistent user login
-  test("POST /api/login should fail with nonexistent user", async () => {
-    const res = await request(server.server)
-      .post("/api/login")
-      .set("x-api-key", process.env.API_KEY)
-      .send({
-        identity: "nonexistentuser",
-        password: "password123",
-      });
+  // -----------------------------
+  // POST /api/login (nonexistent user)
+  // -----------------------------
+
+  test("should fail with nonexistent user", async () => {
+    const res = await server.inject({
+      method: "POST",
+      url: "/api/login",
+      headers: { "x-api-key": process.env.API_KEY },
+      payload: { identity: "nonexistentuser", password: "password123" },
+    });
 
     expect(res.statusCode).toBe(401);
-    expect(res.body.message).toMatch(/not found|invalid|wrong/i);
+    expect(res.json().message).toMatch(/not found|invalid|wrong/i);
   });
 });

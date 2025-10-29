@@ -8,8 +8,8 @@
     "start": "concurrently \"npm run backend\" \"npm run client\"",
     "backend": "tsx watch server/src/server.ts",
     "client": "cd client && npm run dev",
-    "test": "vitest",
-    "test:watch": "vitest --watch"
+    "test": "cross-env NODE_ENV=test vitest",
+    "test:watch": "cross-env NODE_ENV=test vitest --watch"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +29,7 @@
     "@types/node": "^24.5.1",
     "@types/passport-local": "^1.0.38",
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "supertest": "^7.1.4",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
