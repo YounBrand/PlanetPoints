@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
-dotenv.config();
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 import Fastify from "fastify";
 import loginRoutes from "./routes/authRoutes.js";
@@ -21,8 +23,12 @@ server.register(cors, {
 // Connect to DB
 await connectDB();
 
+if (!process.env.SESSION_KEY) {
+  throw new Error("SESSION_KEY must be set in environment variables");
+}
+
 server.register(fastifySecureSession, {
-  key: Buffer.from(process.env.SESSION_KEY || "session-key", "hex"),
+  key: Buffer.from(process.env.SESSION_KEY, "hex"),
 });
 
 // Root route

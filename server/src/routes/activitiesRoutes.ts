@@ -6,14 +6,9 @@ import {
   getActivities,
   getDailyScore,
 } from "../util/dailyActivitiesUtil.js";
-import { verifyApiKey } from "../util/authUtil.js";
 
 const routes = async (fastify: FastifyInstance) => {
   fastify.post("/api/activities/log-daily", async (req, reply) => {
-    const key = req.headers["x-api-key"];
-    if (!verifyApiKey(key as string))
-      return reply.code(403).send({ message: "Forbidden" });
-
     const { userId, activity, unit } = req.body as {
       userId: string;
       activity: string;
@@ -42,10 +37,6 @@ const routes = async (fastify: FastifyInstance) => {
   });
 
   fastify.get("/api/activities/get", async (req, reply) => {
-    const key = req.headers["x-api-key"];
-    if (!verifyApiKey(key as string))
-      return reply.code(403).send({ message: "Forbidden" });
-
     const { userId, activity, dateFrom, dateTo, unitFrom, unitTo } =
       req.query as {
         userId: string;
@@ -83,10 +74,6 @@ const routes = async (fastify: FastifyInstance) => {
   });
 
   fastify.get("/api/activities/calculate-daily", async (req, reply) => {
-    const key = req.headers["x-api-key"];
-    if (!verifyApiKey(key as string))
-      return reply.code(403).send({ message: "Forbidden" });
-
     const { userId, date } = req.query as {
       userId: string;
       date: string;
@@ -107,10 +94,6 @@ const routes = async (fastify: FastifyInstance) => {
   });
 
   fastify.get("/api/activities/calculate-monthly", async (req, reply) => {
-    const key = req.headers["x-api-key"];
-    if (!verifyApiKey(key as string))
-      return reply.code(403).send({ message: "Forbidden" });
-
     const { userId, date } = req.query as {
       userId: string;
       date: string;
