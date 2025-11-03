@@ -72,7 +72,7 @@ const routes = async (fastify: FastifyInstance) => {
           return reply.code(403).send({ message: "Forbidden" });
       },
       preValidation: FastifyPassport.authenticate("identity", {
-        session: false,
+        session: true,
         authInfo: false,
         failWithError: true,
       }),

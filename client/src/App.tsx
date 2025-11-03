@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, useLocation } from "react-router-dom"; 
+import axios from "axios";
 import "./App.css";
 
 type Theme = "light" | "dark";
@@ -16,15 +17,48 @@ interface ActivityLog {
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [theme, setTheme] = useState<Theme>("dark");
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<ActivityType>(null);
   const [activityValue, setActivityValue] = useState("");
   const [tempUnit, setTempUnit] = useState<"F" | "C">("F");
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [totalPoints, setTotalPoints] = useState(0);
+
+  const checkAuthStatus = async () => {
+    setIsCheckingAuth(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/auth/status`,
+        {
+          withCredentials: true,
+          headers: {
+            "x-api-key": import.meta.env.VITE_API_KEY || "",
+          }
+        }
+      );
+      
+      if (response.data.loggedIn) {
+        setIsLoggedIn(true);
+        console.log("User is logged in:", response.data.user);
+      } else {
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      console.error("Auth status check failed:", error);
+      setIsLoggedIn(false);
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, [location]);
 
   useEffect(() => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -117,19 +151,49 @@ function App() {
     closeActivityModal();
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setActivityLogs([]);
-    setTotalPoints(0);
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/logout`,
+        {},
+        {
+          withCredentials: true,
+          headers: {
+            "x-api-key": import.meta.env.VITE_API_KEY || "",
+          }
+        }
+      );
+      
+      setIsLoggedIn(false);
+      setActivityLogs([]);
+      setTotalPoints(0);
+      console.log("Logout successful");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setIsLoggedIn(false);
+      setActivityLogs([]);
+      setTotalPoints(0);
+    }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="pp-app" style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
+        height: "100vh" 
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <span className="pp-logo" style={{ fontSize: "3rem" }}>🌍</span>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pp-app">
-      {/* Dev Toggle */}
-      <div className="pp-dev-toggle" onClick={() => setIsLoggedIn(!isLoggedIn)}>
-        DEV: {isLoggedIn ? "Logged In" : "Logged Out"}
-      </div>
-
       {/* Top Bar / Nav */}
       <header className="pp-nav">
         <div className="pp-container pp-navbar">
