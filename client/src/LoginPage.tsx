@@ -8,6 +8,7 @@ export default function LoginPage() {
     
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -98,18 +99,42 @@ export default function LoginPage() {
                             />
                         </label>
                         
-                        {/* Password input field */}
                         <label>
                             Password
-                            <input 
-                                type="password" 
-                                className="pp-input" 
-                                placeholder="••••••••" 
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required 
-                                disabled={loading}
-                            />
+                            <div style={{ position: "relative" }}>
+                                <input 
+                                    type={showPassword ? "text" : "password"}
+                                    className="pp-input" 
+                                    placeholder="••••••••" 
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required 
+                                    disabled={loading}
+                                    style={{ paddingRight: "40px" }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{
+                                        position: "absolute",
+                                        right: "8px",
+                                        top: "50%",
+                                        transform: "translateY(-50%)",
+                                        background: "none",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        padding: "4px 8px",
+                                        fontSize: "18px",
+                                        opacity: 0.7,
+                                        transition: "opacity 0.2s"
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
+                                    onMouseLeave={(e) => e.currentTarget.style.opacity = "0.7"}
+                                    disabled={loading}
+                                >
+                                    {showPassword ? "🔓" : "🔒"}
+                                </button>
+                            </div>
                         </label>
                         
                         {/* Submit button with loading state */}

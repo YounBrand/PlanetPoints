@@ -1,4 +1,5 @@
 import { Strategy as LocalStrategy } from "passport-local";
+import FastifyPassport from "@fastify/passport";
 import { User } from "../schemas/User.js";
 import bcrypt from "bcrypt";
 
@@ -28,5 +29,19 @@ const identityStrategy = new LocalStrategy({ usernameField: "identity" }, async 
     return done(err);
   }
 })
+
+FastifyPassport.registerUserSerializer(async (user: any) => {
+  return user._id.toString();
+});
+
+FastifyPassport.registerUserDeserializer(async (id: string) => {
+  try {
+    const user = await User.findById(id);
+    return user;
+  } catch (err) {
+    console.error("Error deserializing user:", err);
+    return null;
+  }
+});
 
 export {identityStrategy};
