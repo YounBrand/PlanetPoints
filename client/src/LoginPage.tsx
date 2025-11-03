@@ -12,6 +12,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
 
     const goHome = () => navigate('/');
+    const goRegister = () => navigate('/register');
     
     useEffect(() => { 
         document.documentElement.setAttribute("data-theme", "dark"); 
@@ -124,7 +125,7 @@ export default function LoginPage() {
                         {/* Registration link */}
                         <p className="pp-muted">
                             Don't have an account?{" "}
-                            <a href="/register" style={{ color: "var(--accent)" }}>
+                            <a onClick={goRegister} style={{ color: "var(--accent)", cursor: "pointer" }}>
                                 Register here
                             </a>
                         </p>
