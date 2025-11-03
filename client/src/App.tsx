@@ -45,9 +45,7 @@ function App() {
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
-  const goLogin = () => {
-    navigate('/login');
-  };
+  const goLogin = () => navigate('/login');
 
   const openActivityLog = (type: ActivityType) => {
     setCurrentActivity(type);
