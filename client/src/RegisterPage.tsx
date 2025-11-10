@@ -6,10 +6,13 @@ import axios from "axios";
 export default function RegisterPage() {
   const navigate = useNavigate();
   
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +36,14 @@ export default function RegisterPage() {
     axios
       .post(
         `${import.meta.env.VITE_API_URL}/api/register`,
-        { username, email, password },
+        {
+          username,
+          password,
+          email,
+          name: `${firstName} ${lastName}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
         { 
           withCredentials: true,
         }
@@ -85,6 +95,33 @@ export default function RegisterPage() {
               </div>
             )}
 
+            <div style={{ display: "flex", gap: "10px" }}>
+              <label style={{ flex: 1 }}>
+                First Name
+                <input 
+                  type="text" 
+                  className="pp-input" 
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required 
+                  disabled={loading}
+                />
+              </label>
+              <label style={{ flex: 1 }}>
+                Last Name
+                <input 
+                  type="text" 
+                  className="pp-input" 
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required 
+                  disabled={loading}
+                />
+              </label>
+            </div>
+
             <label>
               Username
               <input 
@@ -113,28 +150,78 @@ export default function RegisterPage() {
 
             <label>
               Password
-              <input 
-                type="password" 
-                className="pp-input" 
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required 
-                disabled={loading}
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="pp-input"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  style={{ paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "8px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px 8px",
+                    fontSize: "18px",
+                    opacity: 0.7,
+                    transition: "opacity 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.7")}
+                  disabled={loading}
+                >
+                  {showPassword ? "🔓" : "🔒"}
+                </button>
+              </div>
             </label>
 
             <label>
               Confirm Password
-              <input 
-                type="password" 
-                className="pp-input" 
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required 
-                disabled={loading}
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="pp-input"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  style={{ paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "8px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px 8px",
+                    fontSize: "18px",
+                    opacity: 0.7,
+                    transition: "opacity 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.7")}
+                  disabled={loading}
+                >
+                  {showPassword ? "🔓" : "🔒"}
+                </button>
+              </div>
             </label>
 
             <button 
