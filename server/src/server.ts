@@ -16,7 +16,7 @@ const server = Fastify();
 const port = Number(process.env.PORT) || 3000;
 
 server.register(cors, {
-  origin: ["http://localhost:5173", "https://planetpoints.onrender.com"],
+  origin: ["http://localhost:5173", "https://planetpoints.onrender.com", "/\.onrender\.com$/"],
   credentials: true,
 });
 
@@ -29,7 +29,14 @@ if (!process.env.SESSION_KEY) {
 
 server.register(fastifySecureSession, {
   key: Buffer.from(process.env.SESSION_KEY, "hex"),
+  cookie: {
+    path: "/",
+    httpOnly: true,
+    secure: true,  
+    sameSite: "none",     
+  }
 });
+
 
 // Root route
 server.get("/", async (request, reply) => {
