@@ -28,8 +28,10 @@ function App() {
   const [tempUnit, setTempUnit] = useState<"F" | "C">("F");
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [totalPoints, setTotalPoints] = useState(0);
-  const [userId, setUserId] = useState<string | null>(null);
 
+  // ------- ADDED: track logged-in userId -------
+  const [userId, setUserId] = useState<string | null>(null);
+  // ---------------------------------------------
 
   const checkAuthStatus = async () => {
     setIsCheckingAuth(true);
@@ -46,9 +48,9 @@ function App() {
       
       if (response.data.loggedIn) {
         setIsLoggedIn(true);
-
+        // ------- ADDED: store userId -------
         setUserId(response.data.user?._id || null);
-
+        // -----------------------------------
         console.log("User is logged in:", response.data.user);
       } else {
         setIsLoggedIn(false);
@@ -114,12 +116,73 @@ function App() {
     }
   };
 
+  // ------- ADDED: map frontend → backend enum -------
   const mapActivityType = (frontendType: ActivityType): string => {
     switch (frontendType) {
       case "recycling": return "RecycleBoxes";
       case "temperature": return "RoomTemperature";
       case "transport": return "MilesTravelled";
       default: return "";
+    }
+  };
+  // --------------------------------------------------
+
+  // ------- ADDED: fetch activities & score -------
+  const fetchUserActivities = async () => {
+    if (!userId) return;
+    try {
+      const backendTypes = ["RecycleBoxes", "RoomTemperature", "MilesTravelled"];
+      let allLogs: ActivityLog[] = [];
+
+      for (const activity of backendTypes) {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/activities/get`,
+          {
+            params: { userId, activity },
+            headers: { "x-api-key": import.meta.env.VITE_API_KEY || "" },
+            withCredentials: true,
+          }
+        );
+        if (res.data.success) {
+          const mapped = res.data.data.map((a: any) => {
+            let displayType = "";
+            let unitLabel = "";
+            let frontendType: ActivityType = null;
+
+            switch (a.activity) {
+              case "RecycleBoxes":
+                displayType = "Recycling";
+                unitLabel = "units";
+                frontendType = "recycling";
+                break;
+              case "RoomTemperature":
+                displayType = "Temperature Set";
+                unitLabel = "°F";
+                frontendType = "temperature";
+                break;
+              case "MilesTravelled":
+                displayType = "Eco-Transport";
+                unitLabel = "miles";
+                frontendType = "transport";
+                break;
+            }
+
+            return {
+              type: displayType,
+              value: a.unit,
+              unit: unitLabel,
+              timestamp: new Date(a.date),
+              points: 0,
+            };
+          });
+          allLogs = [...allLogs, ...mapped];
+        }
+      }
+
+      allLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      setActivityLogs(allLogs);
+    } catch (err) {
+      console.error("Error fetching activities:", err);
     }
   };
 
@@ -142,7 +205,16 @@ function App() {
       console.error("Error fetching daily score:", err);
     }
   };
+  // -------------------------------------------------
 
+  // ------- ADDED: trigger load on login -------
+  useEffect(() => {
+    if (isLoggedIn && userId) {
+      fetchUserActivities();
+      fetchDailyScore();
+    }
+  }, [isLoggedIn, userId]);
+  // --------------------------------------------
 
   const submitActivity = async () => {
     if (!activityValue || !currentActivity) return;
@@ -173,14 +245,7 @@ function App() {
         break;
     }
 
-    const newLog: ActivityLog = {
-      type: displayType,
-      value,
-      unit,
-      timestamp: new Date(),
-      points
-    };
-
+    // ------- MODIFIED: sync with backend -------
     if (userId) {
       const backendActivity = mapActivityType(currentActivity);
       try {
@@ -199,14 +264,16 @@ function App() {
           }
         );
         console.log("Activity logged to backend");
-        await fetchDailyScore(); // update total points
+
+        // refresh backend data
+        await fetchUserActivities();
+        await fetchDailyScore();
       } catch (err) {
         console.error("Error logging activity:", err);
       }
     }
+    // -------------------------------------------
 
-    setActivityLogs([newLog, ...activityLogs]);
-    setTotalPoints(totalPoints + points);
     closeActivityModal();
   };
 
@@ -226,16 +293,14 @@ function App() {
       setIsLoggedIn(false);
       setActivityLogs([]);
       setTotalPoints(0);
-      setUserId(null); 
+      setUserId(null); // ------- ADDED -------
       console.log("Logout successful");
-    } 
-    
-    catch (error) {
+    } catch (error) {
       console.error("Logout failed:", error);
       setIsLoggedIn(false);
       setActivityLogs([]);
       setTotalPoints(0);
-      setUserId(null); 
+      setUserId(null); // ------- ADDED -------
     }
   };
 
@@ -257,7 +322,6 @@ function App() {
 
   return (
     <div className="pp-app">
-      {/* Top Bar / Nav */}
       <header className="pp-nav">
         <div className="pp-container pp-navbar">
           <div className="pp-brand">
@@ -272,7 +336,7 @@ function App() {
             {isLoggedIn ? (
               <>
                 <span className="pp-points-badge">
-                  {totalPoints} pts
+                  {totalPoints.toFixed(1)} pts
                 </span>
                 <button className="pp-btn primary" onClick={handleLogout}>Sign out</button>
               </>
@@ -283,9 +347,7 @@ function App() {
         </div>
       </header>
 
-      {/* Layout with Sidebar */}
       <div className="pp-layout">
-        {/* Left Sidebar Navigation */}
         {isLoggedIn && (
           <aside className="pp-sidebar">
             <nav className="pp-sidebar-nav">
@@ -321,10 +383,8 @@ function App() {
           </aside>
         )}
 
-        {/* Main Content Area */}
         <main className="pp-main-content">
           <div className="pp-content-wrapper">
-            {/* LOGGED OUT: Overview */}
             {!isLoggedIn && activeTab === "overview" && (
               <div className="pp-page">
                 <h2 className="pp-h2">What you can do</h2>
@@ -351,7 +411,6 @@ function App() {
               </div>
             )}
 
-            {/* LOGGED IN: Dashboard */}
             {isLoggedIn && activeTab === "dashboard" && (
               <div className="pp-page">
                 <h2 className="pp-h2">Daily Activity Logger</h2>
@@ -385,7 +444,6 @@ function App() {
               </div>
             )}
 
-            {/* LOGGED IN: Account */}
             {isLoggedIn && activeTab === "account" && (
               <div className="pp-page">
                 <h2 className="pp-h2">Account Settings</h2>
@@ -394,7 +452,7 @@ function App() {
                   <div className="pp-card">
                     <h3>Profile Information</h3>
                     <p>Username: eco_warrior_2025</p>
-                    <p>Total Points: {totalPoints}</p>
+                    <p>Total Points: {totalPoints.toFixed(1)}</p>
                     <p>Member since: October 2025</p>
                   </div>
                   <div className="pp-card">
@@ -406,7 +464,6 @@ function App() {
               </div>
             )}
 
-            {/* Leaderboard Tab */}
             {activeTab === "leaderboard" && (
               <div className="pp-page">
                 <h2 className="pp-h2">Leaderboard</h2>
@@ -426,7 +483,6 @@ function App() {
               </div>
             )}
 
-            {/* Quizzes Tab */}
             {activeTab === "quizzes" && (
               <div className="pp-page">
                 <h2 className="pp-h2">Quizzes</h2>
@@ -448,7 +504,6 @@ function App() {
           </div>
         </main>
 
-        {/* Right Sidebar - Activity Feed */}
         {isLoggedIn && (
           <aside className="pp-activity-feed">
             <h3 className="pp-feed-title">Recent Activities</h3>
@@ -480,7 +535,6 @@ function App() {
         )}
       </div>
 
-      {/* Activity Submission Modal */}
       {showActivityModal && (
         <div className="pp-modal-overlay" onClick={closeActivityModal}>
           <div className="pp-modal" onClick={(e) => e.stopPropagation()}>
