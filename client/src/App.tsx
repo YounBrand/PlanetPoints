@@ -28,6 +28,8 @@ function App() {
   const [tempUnit, setTempUnit] = useState<"F" | "C">("F");
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [totalPoints, setTotalPoints] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+
 
   const checkAuthStatus = async () => {
     setIsCheckingAuth(true);
@@ -44,6 +46,9 @@ function App() {
       
       if (response.data.loggedIn) {
         setIsLoggedIn(true);
+
+        setUserId(response.data.user?._id || null);
+
         console.log("User is logged in:", response.data.user);
       } else {
         setIsLoggedIn(false);
@@ -109,7 +114,37 @@ function App() {
     }
   };
 
-  const submitActivity = () => {
+  const mapActivityType = (frontendType: ActivityType): string => {
+    switch (frontendType) {
+      case "recycling": return "RecycleBoxes";
+      case "temperature": return "RoomTemperature";
+      case "transport": return "MilesTravelled";
+      default: return "";
+    }
+  };
+
+  const fetchDailyScore = async () => {
+    if (!userId) return;
+    try {
+      const today = new Date().toISOString();
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/activities/calculate-daily`,
+        {
+          params: { userId, date: today },
+          headers: { "x-api-key": import.meta.env.VITE_API_KEY || "" },
+          withCredentials: true,
+        }
+      );
+      if (res.status === 200) {
+        setTotalPoints(res.data);
+      }
+    } catch (err) {
+      console.error("Error fetching daily score:", err);
+    }
+  };
+
+
+  const submitActivity = async () => {
     if (!activityValue || !currentActivity) return;
 
     const value = parseFloat(activityValue);
@@ -146,6 +181,30 @@ function App() {
       points
     };
 
+    if (userId) {
+      const backendActivity = mapActivityType(currentActivity);
+      try {
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/activities/log-daily`,
+          {
+            userId,
+            activity: backendActivity,
+            unit: value,
+          },
+          {
+            withCredentials: true,
+            headers: {
+              "x-api-key": import.meta.env.VITE_API_KEY || "",
+            },
+          }
+        );
+        console.log("Activity logged to backend");
+        await fetchDailyScore(); // update total points
+      } catch (err) {
+        console.error("Error logging activity:", err);
+      }
+    }
+
     setActivityLogs([newLog, ...activityLogs]);
     setTotalPoints(totalPoints + points);
     closeActivityModal();
@@ -167,12 +226,16 @@ function App() {
       setIsLoggedIn(false);
       setActivityLogs([]);
       setTotalPoints(0);
+      setUserId(null); 
       console.log("Logout successful");
-    } catch (error) {
+    } 
+    
+    catch (error) {
       console.error("Logout failed:", error);
       setIsLoggedIn(false);
       setActivityLogs([]);
       setTotalPoints(0);
+      setUserId(null); 
     }
   };
 
