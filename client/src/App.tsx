@@ -7,14 +7,6 @@ type Theme = "light" | "dark";
 type TabKey = "overview" | "dashboard" | "leaderboard" | "quizzes" | "account";
 type ActivityType = "recycling" | "temperature" | "transport" | null;
 
-interface ActivityLog {
-  type: string;
-  value: number;
-  unit: string;
-  timestamp: Date;
-  points: number;
-}
-
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
