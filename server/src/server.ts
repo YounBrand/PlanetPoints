@@ -23,6 +23,12 @@ await connectDB();
 
 server.register(fastifySecureSession, {
   key: Buffer.from(process.env.SESSION_KEY || "session-key", "hex"),
+  cookie: {
+    path: "/",
+    httpOnly: true,
+    secure: true,  
+    sameSite: "none",     
+  }
 });
 
 // Root route

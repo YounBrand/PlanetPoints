@@ -123,7 +123,7 @@ function App() {
         }
       );
       if (res.status === 200) {
-        setTotalPoints(res.data);
+        setTotalPoints(res.data.totalPoints ?? 0.0);
       }
     } catch (err) {
       console.error("Error fetching daily score:", err);
