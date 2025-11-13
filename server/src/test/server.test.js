@@ -30,7 +30,6 @@ describe("Server Tests", () => {
     const res = await server.inject({
       method: "GET",
       url: "/api/login/test",
-      headers: { "x-api-key": process.env.API_KEY },
     });
 
     expect(res.statusCode).toBe(200);
@@ -45,7 +44,6 @@ describe("Server Tests", () => {
     const res = await server.inject({
       method: "POST",
       url: "/api/register",
-      headers: { "x-api-key": process.env.API_KEY },
       payload: userData,
     });
 
@@ -65,7 +63,6 @@ describe("Server Tests", () => {
     await server.inject({
       method: "POST",
       url: "/api/register",
-      headers: { "x-api-key": process.env.API_KEY },
       payload: userData,
     });
 
@@ -73,7 +70,6 @@ describe("Server Tests", () => {
     const res = await server.inject({
       method: "POST",
       url: "/api/login",
-      headers: { "x-api-key": process.env.API_KEY },
       payload: { identity: userData.username, password: userData.password },
     });
 
@@ -91,7 +87,6 @@ describe("Server Tests", () => {
     await server.inject({
       method: "POST",
       url: "/api/register",
-      headers: { "x-api-key": process.env.API_KEY },
       payload: userData,
     });
 
@@ -99,7 +94,6 @@ describe("Server Tests", () => {
     const res = await server.inject({
       method: "POST",
       url: "/api/login",
-      headers: { "x-api-key": process.env.API_KEY },
       payload: { identity: userData.username, password: "wrongpassword" },
     });
 
@@ -115,7 +109,6 @@ describe("Server Tests", () => {
     const res = await server.inject({
       method: "POST",
       url: "/api/login",
-      headers: { "x-api-key": process.env.API_KEY },
       payload: { identity: "nonexistentuser", password: "password123" },
     });
 

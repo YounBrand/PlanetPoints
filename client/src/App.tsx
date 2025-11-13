@@ -29,9 +29,6 @@ function App() {
         `${import.meta.env.VITE_API_URL}/api/auth/status`,
         {
           withCredentials: true,
-          headers: {
-            "x-api-key": import.meta.env.VITE_API_KEY || "",
-          },
         }
       );
 
@@ -172,9 +169,6 @@ function App() {
         {},
         {
           withCredentials: true,
-          headers: {
-            "x-api-key": import.meta.env.VITE_API_KEY || "",
-          },
         }
       );
       console.log("Logout successful (server)");

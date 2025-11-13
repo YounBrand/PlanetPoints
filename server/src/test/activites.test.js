@@ -6,7 +6,6 @@ import server from "../server.js";
 import connectDB from "../modules/db.js";
 import { User } from "../schemas/User.js";
 import * as activitiesUtil from "../util/dailyActivitiesUtil.js";
-import * as authUtil from "../util/authUtil.js";
 import { ActivityType } from "../util/dailyActivitiesUtil.js";
 
 // Ensure DB is connected before tests
@@ -19,8 +18,6 @@ describe("activitiesRoutes.ts", () => {
   beforeEach(() => {
     // Reset mocks before each test
     vi.restoreAllMocks();
-    // Mock API key verification
-    vi.spyOn(authUtil, "verifyApiKey").mockImplementation((key) => key === apiKey);
   });
 
   beforeAll(async () => {
@@ -43,22 +40,10 @@ describe("activitiesRoutes.ts", () => {
   // POST /api/activities/log-daily
   // -----------------------------
 
-  test("should reject missing API key", async () => {
-    const res = await server.inject({
-      method: "POST",
-      url: "/api/activities/log-daily",
-      payload: { userId: testUser._id, activity: ActivityType.MilesTravelled, unit: 10 },
-    });
-
-    expect(res.statusCode).toBe(403);
-    expect(res.json().message).toBe("Forbidden");
-  });
-
   test("should reject missing user", async () => {
     const res = await server.inject({
       method: "POST",
       url: "/api/activities/log-daily",
-      headers: { "x-api-key": apiKey },
       payload: { userId: "64afafafafafafafafafafaf", activity: ActivityType.MilesTravelled, unit: 5 },
     });
 
@@ -72,7 +57,6 @@ describe("activitiesRoutes.ts", () => {
     const res = await server.inject({
       method: "POST",
       url: "/api/activities/log-daily",
-      headers: { "x-api-key": apiKey },
       payload: { userId: testUser._id, activity: "invalid type", unit: 10 },
     });
 
@@ -90,7 +74,6 @@ describe("activitiesRoutes.ts", () => {
     const res = await server.inject({
       method: "POST",
       url: "/api/activities/log-daily",
-      headers: { "x-api-key": apiKey },
       payload: { userId: testUser._id, activity: ActivityType.MilesTravelled, unit: 5 },
     });
 
@@ -102,7 +85,6 @@ describe("activitiesRoutes.ts", () => {
     const res = await server.inject({
       method: "POST",
       url: "/api/activities/log-daily",
-      headers: { "x-api-key": apiKey },
       payload: { userId: testUser._id, activity: ActivityType.MilesTravelled },
     });
 
@@ -117,7 +99,6 @@ describe("activitiesRoutes.ts", () => {
     const res = await server.inject({
       method: "GET",
       url: "/api/activities/get",
-      headers: { "x-api-key": apiKey },
       query: { activity: ActivityType.MilesTravelled },
     });
 
@@ -131,7 +112,6 @@ describe("activitiesRoutes.ts", () => {
     const res = await server.inject({
       method: "GET",
       url: "/api/activities/get",
-      headers: { "x-api-key": apiKey },
       query: { userId: String(testUser._id), activity: "invalid type" },
     });
 
@@ -149,7 +129,6 @@ describe("activitiesRoutes.ts", () => {
     const res = await server.inject({
       method: "GET",
       url: "/api/activities/get",
-      headers: { "x-api-key": apiKey },
       query: {
         userId: String(testUser._id),
         activity: ActivityType.MilesTravelled,
@@ -177,7 +156,6 @@ describe("activitiesRoutes.ts", () => {
     const res = await server.inject({
       method: "GET",
       url: "/api/activities/get",
-      headers: { "x-api-key": apiKey },
       query: {
         userId: String(testUser._id),
         activity: ActivityType.MilesTravelled,
@@ -202,23 +180,10 @@ describe("activitiesRoutes.ts", () => {
     const res = await server.inject({
       method: "GET",
       url: "/api/activities/get",
-      headers: { "x-api-key": apiKey },
       query: { userId: String(testUser._id), activity: ActivityType.MilesTravelled },
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.json().data).toEqual([]);
-  });
-
-  test("should reject invalid API key", async () => {
-    const res = await server.inject({
-      method: "GET",
-      url: "/api/activities/get",
-      headers: { "x-api-key": "WRONG_KEY" },
-      query: { userId: String(testUser._id), activity: ActivityType.MilesTravelled },
-    });
-
-    expect(res.statusCode).toBe(403);
-    expect(res.json().message).toBe("Forbidden");
   });
 });
