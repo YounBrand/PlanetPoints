@@ -46,7 +46,6 @@ export default function RegisterPage() {
         },
         { 
           withCredentials: true,
-          headers: { "x-api-key": import.meta.env.VITE_API_KEY || "" }
         }
       )
       .then((response) => {

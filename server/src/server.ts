@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
-dotenv.config();
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 import Fastify from "fastify";
 import loginRoutes from "./routes/authRoutes.js";
@@ -14,15 +16,19 @@ const server = Fastify();
 const port = Number(process.env.PORT) || 3000;
 
 server.register(cors, {
-  origin: ["http://localhost:5173", "https://planetpoints.onrender.com"],
+  origin: ["http://localhost:5173", "https://planetpoints.onrender.com", "/\.onrender\.com$/"],
   credentials: true,
 });
 
 // Connect to DB
 await connectDB();
 
+if (!process.env.SESSION_KEY) {
+  throw new Error("SESSION_KEY must be set in environment variables");
+}
+
 server.register(fastifySecureSession, {
-  key: Buffer.from(process.env.SESSION_KEY || "session-key", "hex"),
+  key: Buffer.from(process.env.SESSION_KEY, "hex"),
   cookie: {
     path: "/",
     httpOnly: true,
@@ -30,6 +36,7 @@ server.register(fastifySecureSession, {
     sameSite: "none",     
   }
 });
+
 
 // Root route
 server.get("/", async (request, reply) => {

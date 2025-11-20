@@ -31,9 +31,6 @@ export default function LoginPage() {
                 { identity: email, password }, //expects 'identity' field (username or email)
                 { 
                     withCredentials: true,
-                    headers: {
-                        "x-api-key": import.meta.env.VITE_API_KEY || "",
-                    }
                 }
             )
             .then((response) => {
