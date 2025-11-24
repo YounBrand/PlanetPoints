@@ -2,41 +2,61 @@ import dotenv from "dotenv";
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import server from "../server.js"; 
 import * as quizUtil from "../util/quizUtil.js"; 
+import * as crypto from 'crypto';
+import axios from 'axios';
 
 dotenv.config();
-const originalFetch = global.fetch;
 
-const mockOpenRouterResponse = (llmContent, status = 200) => {
+// Generating deterministic hash for comparison
+const generateHash = (content) => {
+  return crypto.createHash('sha256').update(content).digest('hex');
+};
+
+const mockOpenRouterAxiosResponse = (llmContent, status = 200) => {
+  const apiBody = {
+    choices: [{
+      message: {
+        content: llmContent,
+      },
+    }],
+    id: "chatcmpl-mock", 
+    model: "mock-model",
+  };
+  
   return Promise.resolve({
-    ok: status >= 200 && status < 300,
+    data: apiBody,
     status: status,
-    // Mock the OpenRouter API structure containing the LLM's response
-    json: () => Promise.resolve({
-      choices: [{
-        message: {
-          content: llmContent,
-        },
-      }],
-    }),
-    text: () => Promise.resolve(JSON.stringify({
-        choices: [{
-          message: {
-            content: llmContent,
-          },
-        }],
-      })),
+        statusText: status >= 200 && status < 300 ? 'OK' : 'Error',
+        headers: {},
+        config: {},
   });
+};
+
+const mockOpenRouterAxiosError = (errorData, status = 500) => {
+    const error = new Error("Request failed with status code " + status);
+    Object.assign(error, {
+        response: {
+            status: status,
+            data: errorData,
+            headers: {},
+            config: {},
+        }
+    });
+    return Promise.reject(error);
 };
 
 describe("quizRoutes.ts", () => {
   beforeEach(() => {
     // Restores mocks between tests
     vi.restoreAllMocks();
-    global.fetch = originalFetch; 
+    
+    vi.spyOn(axios, 'post').mockClear();
   });
-  
+
   test("should generate quiz successfully", async () => {
+    const mockQuizId = "abc1234567890def";
     vi.spyOn(quizUtil, "generateQuiz").mockResolvedValue({
+      quizId: mockQuizId,
       questions: [
         {
           question: "What is carbon footprint?",
@@ -53,7 +73,9 @@ describe("quizRoutes.ts", () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json().quiz.questions).toHaveLength(1);
+    const body = res.json();
+    expect(body.quiz).toHaveProperty("quizId", mockQuizId);
+    expect(body.quiz.questions).toHaveLength(1);
   });
 
   test("should default topic when not provided", async () => {
@@ -70,7 +92,7 @@ describe("quizRoutes.ts", () => {
     expect(mock).toHaveBeenCalledWith("carbon footprint");
   });
 
-  test("should return 500 if quiz generation fails", async () => {
+  test("should return error if quiz generation fails", async () => {
     vi.spyOn(quizUtil, "generateQuiz").mockRejectedValue(new Error("API error"));
 
     const res = await server.inject({
@@ -82,49 +104,83 @@ describe("quizRoutes.ts", () => {
     expect(res.statusCode).toBe(500);
     expect(res.json().error).toBe("API error");
   });
+  
+  // Define the expected content for hashing tests
+  const sampleQuizContent = {
+    "questions": [
+      { "question": "Q1", "options": ["A"], "answer": "A" }
+    ]
+  };
+  const sampleLLMContent = `\`\`\`json\n${JSON.stringify(sampleQuizContent)}\n\`\`\``;
+  const expectedHash = generateHash(JSON.stringify(sampleQuizContent));
+  
+  test("should generate a unique quizId from the content", async () => {
+    vi.spyOn(axios, 'post').mockResolvedValue(mockOpenRouterAxiosResponse(sampleLLMContent));
+
+    const quizResult = await quizUtil.generateQuiz("climate");
+    
+    expect(quizResult).toHaveProperty("quizId"); 
+    expect(typeof quizResult.quizId).toBe("string");
+    expect(quizResult.quizId).toBe(expectedHash);
+    expect(quizResult).toHaveProperty("questions");
+    expect(quizResult).not.toHaveProperty("rawText");
+  });
 
   test("should return rawText if LLM output is not valid JSON", async () => {
     const rawContent = "This is not JSON, it's just raw text.";
     
-    vi.spyOn(global, 'fetch').mockResolvedValue(mockOpenRouterResponse(rawContent));
+    vi.spyOn(axios, 'post').mockResolvedValue(mockOpenRouterAxiosResponse(rawContent));
 
     const quizResult = await quizUtil.generateQuiz("history");
 
     expect(quizResult).toHaveProperty("rawText");
     expect(quizResult.rawText).toBe(rawContent);
     expect(quizResult).not.toHaveProperty("questions");
+    expect(quizResult).not.toHaveProperty("quizId");
   });
 
   test("should return rawText if OpenRouter response cannot be parsed", async () => {
-    const rawAPIResponse = "Server maintenance, please try again.";
+    const rawContent = "This is not JSON content in the message field.";
     
-    vi.spyOn(global, 'fetch').mockResolvedValue(Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => { throw new Error('Simulated JSON parse error'); }, 
-      text: () => Promise.resolve(rawAPIResponse), 
-    }));
+    vi.spyOn(axios, 'post').mockResolvedValue(mockOpenRouterAxiosResponse(rawContent));
 
-    const quizResult = await quizUtil.generateQuiz("history");
+    const quizResult = await quizUtil.generateQuiz("recycling");
 
     expect(quizResult).toHaveProperty("rawText");
-    expect(quizResult.rawText).toBe(rawAPIResponse);
+    expect(quizResult.rawText).toBe(rawContent);
     expect(quizResult).not.toHaveProperty("questions");
+    expect(quizResult).not.toHaveProperty("quizId"); 
   });
+    
+    test("should handle API failure", async () => {
+        const errorDetails = { error: { message: "Invalid API key" } };
+        
+        vi.spyOn(axios, 'post').mockImplementation(() => mockOpenRouterAxiosError(errorDetails, 401));
 
-  test("should generate a quiz question and validate its format (Real API Call)", async () => {    
-    const topic = "energy";
+        await expect(quizUtil.generateQuiz("fail")).rejects.toThrow(/OpenRouter API call failed \(Status 401\)/);
+    });
+
+  test("should generate a quiz question and validate its format", async () => {  
+    const topic = "climate change";
     let quizResult;
 
-    try {      
+    vi.spyOn(axios, 'post').mockRestore(); 
+
+    try {
       quizResult = await quizUtil.generateQuiz(topic);
     } catch (error) {
       throw new Error(`API call failed during test. 
-        Ensure your OPENROUTER_API_KEY is set and valid. Original error: ${error.message}`);
+      Ensure OPENROUTER_API_KEY is set and valid. Original error: ${error.message}`);
     }
 
     // Check for successful parsing and content
     expect(quizResult).not.toHaveProperty("rawText");
+    
+    // Validate quizId property
+    expect(quizResult).toHaveProperty("quizId");
+    expect(typeof quizResult.quizId).toBe("string");
+    expect(quizResult.quizId.length).toBe(64);
+
     expect(quizResult).toHaveProperty("questions");
     expect(quizResult.questions).toBeInstanceOf(Array);
     expect(quizResult.questions.length).toBeGreaterThan(0); 
@@ -139,5 +195,5 @@ describe("quizRoutes.ts", () => {
     expect(firstQuestion).toHaveProperty("answer");
     expect(typeof firstQuestion.answer).toBe("string");
     
-  }, 20000);
+  }, 100000);
 });
