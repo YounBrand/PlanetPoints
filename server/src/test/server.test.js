@@ -25,15 +25,15 @@ describe("Server Tests", () => {
   // -----------------------------
   // GET /api/login/test
   // -----------------------------
-  
-  test("GET /api/login/test returns 'hello world'", async () => {
+
+  test("GET /api/health returns 'Backend is healthy!'", async () => {
     const res = await server.inject({
       method: "GET",
-      url: "/api/login/test",
+      url: "/api/health",
     });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json().message).toBe("hello world");
+    expect(res.json().message).toBe("Backend is healthy!");
   });
 
   // -----------------------------

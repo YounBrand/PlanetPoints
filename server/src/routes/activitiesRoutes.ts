@@ -4,10 +4,12 @@ import {
   isActivityType,
   logActivity,
   getActivities,
-  getDailyScore,
+  getScore,
+  getLeaderboard,
 } from "../util/dailyActivitiesUtil.js";
 
 const routes = async (fastify: FastifyInstance) => {
+  // Log daily route
   fastify.post("/api/activities/log-daily", async (req, reply) => {
     const { userId, activity, unit } = req.body as {
       userId: string;
@@ -36,6 +38,7 @@ const routes = async (fastify: FastifyInstance) => {
     return reply.code(400).send({ message: result.message });
   });
 
+  // Get activity route
   fastify.get("/api/activities/get", async (req, reply) => {
     const { userId, activity, dateFrom, dateTo, unitFrom, unitTo } =
       req.query as {
@@ -73,19 +76,24 @@ const routes = async (fastify: FastifyInstance) => {
     return reply.code(200).send(result);
   });
 
-  fastify.get("/api/activities/calculate-daily", async (req, reply) => {
-    const { userId, date } = req.query as {
+  // Calcualte score route
+  fastify.get("/api/activities/calculate-score", async (req, reply) => {
+    const { userId, dateFrom, dateTo } = req.query as {
       userId: string;
-      date: string;
+      dateFrom: string;
+      dateTo: string;
     };
 
-    const newDate = new Date(date);
-    newDate.setDate(newDate.getDate() + 1);
+    if (!userId || !dateFrom || !dateTo) {
+      return reply
+        .code(400)
+        .send({ message: "userId, dateFrom and dateTo are required" });
+    }
 
-    const calculateDailyResponse = await getDailyScore(
-      userId,
-      new Date(newDate)
-    );
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo);
+
+    const calculateDailyResponse = await getScore(userId, from, to);
     if (!calculateDailyResponse.success) {
       return reply.code(500).send({ message: calculateDailyResponse.message });
     }
@@ -93,24 +101,28 @@ const routes = async (fastify: FastifyInstance) => {
     return reply.code(200).send(calculateDailyResponse.score);
   });
 
-  fastify.get("/api/activities/calculate-monthly", async (req, reply) => {
-    const { userId, date } = req.query as {
-      userId: string;
-      date: string;
+  // Leaderboard route
+  fastify.get("/api/activities/get-leaderboard", async (req, reply) => {
+    const { dateFrom, dateTo } = req.query as {
+      dateFrom: string;
+      dateTo: string;
     };
 
-    const newDate = new Date(date);
-    newDate.setDate(newDate.getDate() + 1);
-
-    const calculateDailyResponse = await getDailyScore(
-      userId,
-      new Date(newDate)
-    );
-    if (!calculateDailyResponse.success) {
-      return reply.code(500).send({ message: calculateDailyResponse.message });
+    if (!dateFrom || !dateTo) {
+      return reply
+        .code(400)
+        .send({ message: "dateFrom and dateTo are required" });
     }
 
-    return reply.code(200).send(calculateDailyResponse.score);
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo);
+
+    const getLeaderboardResponse = await getLeaderboard(from, to);
+    if (!getLeaderboardResponse.success) {
+      return reply.code(500).send({ message: getLeaderboardResponse.message });
+    }
+
+    return reply.code(200).send(getLeaderboardResponse.data);
   });
 };
 

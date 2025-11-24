@@ -10,38 +10,6 @@ const isActivityType = (value: string): value is ActivityType => {
   return (Object.values(ActivityType) as string[]).includes(value);
 };
 
-interface LogActivityResponse {
-  success: boolean;
-  message: string;
-}
-
-const logActivity = async (
-  userId: string,
-  activity: ActivityType,
-  unit: Number
-): Promise<LogActivityResponse> => {
-  try {
-    const user = await User.findOne({ _id: userId });
-    if (!user) return { success: false, message: "User not found" };
-
-    user.activities.push({
-      activity,
-      unit,
-      date: new Date(),
-    });
-
-    await user.save();
-
-    return { success: true, message: `Logged activity for user ${userId}` };
-  } catch (err) {
-    console.log(err);
-    return {
-      success: false,
-      message: `Activity could not be logged for user ${userId}, ${err} `,
-    };
-  }
-};
-
 interface ActivityFilterParams {
   dateFrom?: Date;
   dateTo?: Date;
@@ -112,22 +80,94 @@ const getActivityUnit = async (
   return { success: true, score: total };
 };
 
-type GetDailyScoreResponse =
+interface LogActivityResponse {
+  success: boolean;
+  message: string;
+}
+
+const logActivity = async (
+  userId: string,
+  activity: ActivityType,
+  unit: number
+): Promise<LogActivityResponse> => {
+  try {
+    const user = await User.findOne({ _id: userId });
+    if (!user) return { success: false, message: "User not found" };
+
+    if (activity === ActivityType.RoomTemperature) {
+      const todayFrom = new Date();
+      todayFrom.setHours(0, 0, 0, 0);
+      const todayTo = new Date();
+      todayTo.setHours(23, 59, 59, 999);
+
+      const tempToday = await getActivities(
+        userId,
+        ActivityType.RoomTemperature,
+        {
+          dateFrom: todayFrom,
+          dateTo: todayTo,
+        }
+      );
+
+      if (!tempToday.success)
+        return {
+          success: false,
+          message: `Activity could not be logged for user ${userId}, ${tempToday.message} `,
+        };
+
+      if (tempToday.data.length > 0) {
+        const existing = tempToday.data[0];
+
+        const existingTemperatureIndex = user.activities.findIndex((a) =>
+          a._id.equals(existing._id)
+        );
+
+        if (existingTemperatureIndex === -1) {
+          return {
+            success: false,
+            message: `Activity could not be logged for user ${userId} `,
+          };
+        }
+
+        user.activities[existingTemperatureIndex].activity = activity;
+        user.activities[existingTemperatureIndex].unit = unit;
+        user.activities[existingTemperatureIndex].date = new Date();
+
+        await user.save();
+        return { success: true, message: `Updated today's temperature` };
+      }
+    }
+    user.activities.push({
+      activity,
+      unit,
+      date: new Date(),
+    });
+
+    await user.save();
+    return { success: true, message: `Logged activity for user ${userId}` };
+  } catch (err) {
+    console.log(err);
+    return {
+      success: false,
+      message: `Activity could not be logged for user ${userId}, ${err} `,
+    };
+  }
+};
+
+type getScoreResponse =
   | { success: true; score: number }
   | { success: false; message: string };
 
-const getDailyScore = async (
+const getScore = async (
   userId: string,
-  date: Date
-): Promise<GetDailyScoreResponse> => {
-  const dateFrom = new Date(date);
-  dateFrom.setDate(date.getDate() - 1);
-
+  dateFrom: Date,
+  dateTo: Date
+): Promise<getScoreResponse> => {
   const recycleBoxesScore = await getActivityUnit(
     userId,
     ActivityType.RecycleBoxes,
     dateFrom,
-    date
+    dateTo
   );
   if (!recycleBoxesScore.success)
     return { success: false, message: recycleBoxesScore.message };
@@ -136,7 +176,7 @@ const getDailyScore = async (
     userId,
     ActivityType.RoomTemperature,
     dateFrom,
-    date
+    dateTo
   );
   if (!roomTemperatureScore.success)
     return { success: false, message: roomTemperatureScore.message };
@@ -145,15 +185,16 @@ const getDailyScore = async (
     userId,
     ActivityType.MilesTravelled,
     dateFrom,
-    date
+    dateTo
   );
   if (!milesTravelledScore.success)
     return { success: false, message: milesTravelledScore.message };
 
+  const tempDiff = Math.abs(roomTemperatureScore.score - 72);
+  const tempScore = Math.max(0, 72 - tempDiff);
+
   const finalDailyScore =
-    recycleBoxesScore.score * 0.4 +
-    (72 - roomTemperatureScore.score) * 0.3 +
-    milesTravelledScore.score * 0.3;
+    recycleBoxesScore.score + tempScore + milesTravelledScore.score;
 
   return {
     success: true,
@@ -161,53 +202,55 @@ const getDailyScore = async (
   };
 };
 
-type GetMonthlyScoreResponse =
-  | { success: true; score: number }
+interface LeaderboardUser {
+  username: string;
+  score: number;
+  rank: number;
+}
+
+type getLeaderboardResponse =
+  | { success: true; data: LeaderboardUser[] }
   | { success: false; message: string };
 
-const GetMonthlyScore = async (
-  userId: string,
-  date: Date
-): Promise<GetMonthlyScoreResponse> => {
-  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+const getLeaderboard = async (
+  dateFrom: Date,
+  dateTo: Date
+): Promise<getLeaderboardResponse> => {
+  try {
+    const users = await User.find({});
 
-  const recycleBoxesScore = await getActivityUnit(
-    userId,
-    ActivityType.RecycleBoxes,
-    startOfMonth,
-    endOfMonth
-  );
-  if (!recycleBoxesScore.success)
-    return { success: false, message: recycleBoxesScore.message };
+    const leaderboard: LeaderboardUser[] = [];
 
-  const roomTemperatureScore = await getActivityUnit(
-    userId,
-    ActivityType.RoomTemperature,
-    startOfMonth,
-    endOfMonth
-  );
-  if (!roomTemperatureScore.success)
-    return { success: false, message: roomTemperatureScore.message };
+    for (const u of users) {
+      if (!u.username) continue;
+      const score = await getScore(u._id.toString(), dateFrom, dateTo);
 
-  const milesTravelledScore = await getActivityUnit(
-    userId,
-    ActivityType.MilesTravelled,
-    startOfMonth,
-    endOfMonth
-  );
-  if (!milesTravelledScore.success)
-    return { success: false, message: milesTravelledScore.message };
+      if (!score.success) {
+        return { success: false, message: score.message };
+      }
 
-  const finalMonthlyScore =
-    recycleBoxesScore.score * 0.4 +
-    (72 - roomTemperatureScore.score) * 0.3 +
-    milesTravelledScore.score * 0.3;
+      leaderboard.push({
+        username: u.username,
+        score: score.score,
+        rank: 0,
+      });
+    }
 
-  return {
-    success: true,
-    score: finalMonthlyScore,
-  };
+    leaderboard.sort((a, b) => b.score - a.score);
+
+    const rankedLeaderboard = leaderboard.map((user, i) => ({
+      ...user,
+      rank: i + 1,
+    }));
+
+    return { success: true, data: rankedLeaderboard };
+  } catch (err) {
+    console.log(err);
+    return {
+      success: false,
+      message: `Unable to get leaderboard, ${err}`,
+    };
+  }
 };
 
 export {
@@ -216,6 +259,6 @@ export {
   LogActivityResponse,
   logActivity,
   getActivities,
-  getDailyScore,
-  GetMonthlyScore,
+  getScore,
+  getLeaderboard,
 };
