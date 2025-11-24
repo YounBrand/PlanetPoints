@@ -4,10 +4,12 @@ import bcrypt from "bcrypt";
 import FastifyPassport from "@fastify/passport";
 
 const routes = async (fastify: FastifyInstance) => {
-  fastify.get("/api/login/test", async (req, reply) => {
-    return reply.code(200).send({ message: "hello world" });
+  // Health route
+  fastify.get("/api/health", async (req, reply) => {
+    return reply.code(200).send({ message: "Backend is healthy!" });
   });
 
+  // Check if user is logged in
   fastify.get("/api/auth/status", async (req, reply) => {
     if (req.isAuthenticated())
       return reply.code(200).send({ loggedIn: true, user: req.user });
@@ -15,6 +17,7 @@ const routes = async (fastify: FastifyInstance) => {
     return reply.code(200).send({ loggedIn: false });
   });
 
+  // Register route
   fastify.post("/api/register", async (req, reply) => {
     const { username, password, email, name } = req.body as {
       username: string;
@@ -50,6 +53,7 @@ const routes = async (fastify: FastifyInstance) => {
     return reply.code(200).send({ message: "User successfully created" });
   });
 
+  // Login route
   fastify.post(
     "/api/login",
     {
@@ -66,6 +70,7 @@ const routes = async (fastify: FastifyInstance) => {
     }
   );
 
+  // Logout route
   fastify.post("/api/logout", async (req, reply) => {
     await req.logout();
     req.session.delete();
