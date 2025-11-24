@@ -6,6 +6,7 @@ if (process.env.NODE_ENV !== "production") {
 import Fastify from "fastify";
 import loginRoutes from "./routes/authRoutes.js";
 import activitiesRoute from "./routes/activitiesRoutes.js";
+import quizRoutes from "./routes/quizRoutes.js";
 import connectDB from "./modules/db.js";
 import fastifyPassport from "@fastify/passport";
 import fastifySecureSession from "@fastify/secure-session";
@@ -50,6 +51,7 @@ fastifyPassport.use("identity", identityStrategy);
 
 server.register(loginRoutes);
 server.register(activitiesRoute);
+server.register(quizRoutes);
 
 if (process.env.NODE_ENV !== "test") {
   server.listen({ port: port, host: "0.0.0.0" }, function (err, address) {
