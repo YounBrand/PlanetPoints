@@ -1,18 +1,19 @@
 import dotenv from "dotenv";
 dotenv.config(); 
 
-export interface QuizQuestion {
+export type QuizQuestion = {
   question: string;
   options: string[];
   answer: string;
-}
+};
 
-export interface QuizResponse {
-  questions?: QuizQuestion[]; 
-  rawText?: any; 
-}
+export type QuizResponse = {
+  questions?: QuizQuestion[];
+  rawText?: any;
+};
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const MODEL_ID = "meta-llama/llama-3.3-70b-instruct:free"
 
 export const generateQuiz = async (topic: string): Promise<QuizResponse> => {
   const response = await fetch(OPENROUTER_URL, {
@@ -22,7 +23,7 @@ export const generateQuiz = async (topic: string): Promise<QuizResponse> => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "meta-llama/llama-3.3-70b-instruct:free",
+      model: MODEL_ID,
       messages: [
         {
           role: "user",
