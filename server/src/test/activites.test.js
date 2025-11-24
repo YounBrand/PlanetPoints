@@ -186,4 +186,165 @@ describe("activitiesRoutes.ts", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().data).toEqual([]);
   });
+    // -----------------------------
+  // GET /api/activities/calculate-score
+  // -----------------------------
+  test("should reject missing parameters for calculate-score", async () => {
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/activities/calculate-score",
+      query: { userId: String(testUser._id), dateFrom: "2025-01-01" }, // missing dateTo
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json().message).toBe("userId, dateFrom and dateTo are required");
+  });
+
+  test("should return error if getScore fails", async () => {
+    vi.spyOn(activitiesUtil, "getScore").mockResolvedValue({
+      success: false,
+      message: "Score calculation failed",
+    });
+
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/activities/calculate-score",
+      query: {
+        userId: String(testUser._id),
+        dateFrom: "2025-01-01",
+        dateTo: "2025-02-01",
+      },
+    });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.json().message).toBe("Score calculation failed");
+  });
+
+  test("should calculate score successfully", async () => {
+    vi.spyOn(activitiesUtil, "getScore").mockResolvedValue({
+      success: true,
+      score: 42,
+    });
+
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/activities/calculate-score",
+      query: {
+        userId: String(testUser._id),
+        dateFrom: "2025-01-01",
+        dateTo: "2025-02-01",
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toBe(42);
+  });
+
+  // -----------------------------
+  // GET /api/activities/get-leaderboard
+  // -----------------------------
+  test("should reject missing date To range for leaderboard", async () => {
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/activities/get-leaderboard",
+      query: { dateFrom: "2025-01-01" }, 
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json().message).toBe("dateFrom and dateTo are required");
+  });
+
+    test("should reject missing date From range for leaderboard", async () => {
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/activities/get-leaderboard",
+      query: { dateTo: "2025-01-01" }, 
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json().message).toBe("dateFrom and dateTo are required");
+  });
+
+  test("should return error if leaderboard calculation fails", async () => {
+    vi.spyOn(activitiesUtil, "getLeaderboard").mockResolvedValue({
+      success: false,
+      message: "Leaderboard error",
+    });
+
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/activities/get-leaderboard",
+      query: {
+        dateFrom: "2025-01-01",
+        dateTo: "2025-02-01",
+      },
+    });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.json().message).toBe("Leaderboard error");
+  });
+
+  test("should return leaderboard successfully", async () => {
+    vi.spyOn(activitiesUtil, "getLeaderboard").mockResolvedValue({
+      success: true,
+      data: [
+        { username: "A", score: 100, rank: 1 },
+        { username: "B", score: 80, rank: 2 },
+      ],
+    });
+
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/activities/get-leaderboard",
+      query: {
+        dateFrom: "2025-01-01",
+        dateTo: "2025-02-01",
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const leaderboard = res.json();
+
+    expect(leaderboard).toBeInstanceOf(Array);
+    expect(leaderboard).toHaveLength(2);
+    expect(leaderboard[0].username).toBe("A");
+    expect(leaderboard[0].rank).toBe(1);
+  });
+
+    test("should rank tied scores sequentially", async () => {
+    vi.spyOn(activitiesUtil, "getLeaderboard").mockResolvedValue({
+      success: true,
+      data: [
+        { username: "UserA", score: 50, rank: 1 },
+        { username: "UserB", score: 50, rank: 2 }, 
+        { username: "UserC", score: 30, rank: 3 },
+      ],
+    });
+
+    const res = await server.inject({
+      method: "GET",
+      url: "/api/activities/get-leaderboard",
+      query: {
+        dateFrom: "2025-01-01",
+        dateTo: "2025-02-01",
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+
+    const leaderboard = res.json();
+
+    expect(leaderboard).toHaveLength(3);
+
+    expect(leaderboard[0].username).toBe("UserA");
+    expect(leaderboard[0].score).toBe(50);
+    expect(leaderboard[0].rank).toBe(1);
+
+    expect(leaderboard[1].username).toBe("UserB");
+    expect(leaderboard[1].score).toBe(50);
+    expect(leaderboard[1].rank).toBe(2); 
+
+    expect(leaderboard[2].username).toBe("UserC");
+    expect(leaderboard[2].rank).toBe(3);
+  });
 });
