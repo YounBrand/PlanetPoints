@@ -347,4 +347,5 @@ describe("activitiesRoutes.ts", () => {
     expect(leaderboard[2].username).toBe("UserC");
     expect(leaderboard[2].rank).toBe(3);
   });
+
 });
