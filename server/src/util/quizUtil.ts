@@ -23,9 +23,6 @@ export type OpenRouterAPIData = {
     }>;
 };
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL_ID = "x-ai/grok-4.1-fast:free"
-
 // Generate unique hash string for quizId
 const generateHash = (content: string): string => {
     return crypto.createHash('sha256').update(content).digest('hex');
@@ -48,7 +45,7 @@ export const generateQuiz = async (topic: string): Promise<QuizResponse> => {
         throw new Error("OPENROUTER_API_KEY environment variable is not set.");
     }
     const payload = {
-        model: MODEL_ID,
+        model: "x-ai/grok-4.1-fast:free",
         messages: [
             {
                 role: "user",
@@ -60,7 +57,7 @@ export const generateQuiz = async (topic: string): Promise<QuizResponse> => {
     };
     try {
         const response = await axios.post(
-            OPENROUTER_URL,
+            `${process.env.OPENROUTER_URL}`,
             payload,
             {
                 headers: {
