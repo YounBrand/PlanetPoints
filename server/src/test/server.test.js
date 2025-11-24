@@ -29,7 +29,7 @@ describe("Server Tests", () => {
   test("GET /api/health returns 'Backend is healthy!'", async () => {
     const res = await server.inject({
       method: "GET",
-      url: "/api/login/test",
+      url: "/api/health",
     });
 
     expect(res.statusCode).toBe(200);
