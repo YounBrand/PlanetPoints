@@ -3,46 +3,12 @@ import * as crypto from 'crypto';
 import dotenv from "dotenv";
 dotenv.config(); 
 
-export type QuizQuestion = {
-  question: string;
-  options: string[];
-  answer: string;
-};
-
-export type QuizResponse = {
-  quizId?: string;
-  questions?: QuizQuestion[];
-  rawText?: any;
-};
-
-export type OpenRouterAPIData = {
-    choices: Array<{
-        message: {
-            content: string;
-        }
-    }>;
-};
-
-// Generate unique hash string for quizId
-const generateHash = (content: string): string => {
-    return crypto.createHash('sha256').update(content).digest('hex');
-};
-
-// Parses quiz object from response string
-const extractQuizObject = (content: string): { questions: QuizQuestion[] } | null => {
-    const cleanedContent = content.trim()
-        .replace(/^```json\s*/, '')
-        .replace(/\s*```$/, '');
-    try {
-        return JSON.parse(cleanedContent) as { questions: QuizQuestion[] };
-    } catch {
-        return null; 
-    }
-};
-
 export const generateQuiz = async (topic: string): Promise<QuizResponse> => {
     if (!process.env.OPENROUTER_API_KEY) {
-        throw new Error("OPENROUTER_API_KEY environment variable is not set.");
+        return { success: false, message: "OPENROUTER_API_KEY environment variable is not set." };
+    }
+    if (!process.env.OPENROUTER_URL) {
+        return { success: false, message: "OPENROUTER_URL environment variable is not set." };
     }
     const payload = {
         model: "x-ai/grok-4.1-fast:free",
@@ -67,40 +33,68 @@ export const generateQuiz = async (topic: string): Promise<QuizResponse> => {
                 },
             }
         );
-
+        // Extract content
         const content = (response.data as OpenRouterAPIData)
             ?.choices?.[0]?.message?.content;
-
         if (!content) {
-            // Return raw data if content is missing (e.g., API structure changed)
-            return { rawText: response.data };
+            return { success: false, message: "API response received but contained no content." };
         }
-        
         const quizObject = extractQuizObject(content);
-
         if (!quizObject) {
-            // Failed to parse the cleaned content into the quiz format
-            return { rawText: content };
+            return { success: false, message: "Failed to parse quiz JSON from LLM response." };
         }
-        
-        // Generate the unique ID based on content
-        const normalizedContent = JSON.stringify(quizObject);
-        const quizId = generateHash(normalizedContent);
-
+        const quizId = crypto.randomUUID();
         return {
-            quizId: quizId,
-            questions: quizObject.questions
+            success: true,
+            data: {
+                quizId: quizId,
+                questions: quizObject.questions
+            }
         };
-
     } catch (err: unknown) {
-        const errorWithResponse = err as { response?: { status: number; data: any; message?: string } };
-        if (errorWithResponse.response) {
-            const status = errorWithResponse.response.status;
-            const errorData = JSON.stringify(errorWithResponse.response.data);
-            throw new Error(`OpenRouter API call failed (Status ${status}): ${errorData.substring(0, 150)}...`);
-        }
-
-        const errorMessage = (err instanceof Error) ? err.message : 'An unknown network error occurred.';
-        throw new Error(`Network or Request Setup Error: ${errorMessage}`);
+    const errorWithResponse = err as { response?: { status: number; data: any; message?: string } };
+    if (errorWithResponse.response) {
+      const status = errorWithResponse.response.status;
+      const errorData = JSON.stringify(errorWithResponse.response.data);
+      return { 
+        success: false, 
+        message: `OpenRouter API call failed (Status ${status}): ${errorData.substring(0, 100)}...` 
+      };
     }
+    const errorMessage = (err instanceof Error) ? err.message : 'An unknown network error occurred.';
+    return { 
+      success: false, 
+      message: `Network or Request Setup Error: ${errorMessage}` 
+    };
+  }
+};
+
+// Parses quiz object from response string
+const extractQuizObject = (content: string): { questions: QuizQuestion[] } | null => {
+    const cleanedContent = content.trim()
+        .replace(/^```json\s*/, '')
+        .replace(/\s*```$/, '');
+    try {
+        return JSON.parse(cleanedContent) as { questions: QuizQuestion[] };
+    } catch {
+        return null; 
+    }
+};
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  answer: string;
+};
+
+export type QuizResponse =
+  | { success: true; data: { quizId: string; questions: QuizQuestion[] } }
+  | { success: false; message: string };
+
+export type OpenRouterAPIData = {
+    choices: Array<{
+        message: {
+            content: string;
+        }
+    }>;
 };

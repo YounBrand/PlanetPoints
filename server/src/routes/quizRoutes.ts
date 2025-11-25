@@ -1,18 +1,19 @@
 import type { FastifyInstance } from "fastify";
-import { generateQuiz } from "../util/quizUtil"; 
+import { generateQuiz } from "../util/quizUtil";
 
-const quizRoutes = async (fastify: FastifyInstance) => {
+const routes = async (fastify: FastifyInstance) => {
+  // Generate Quiz Route
   fastify.post("/api/quiz", async (req, reply) => {
-    const { topic = "carbon footprint" } = req.body as { topic?: string };
-
-    try {
-      const quiz = await generateQuiz(topic); 
-      return reply.code(200).send({ quiz }); 
-    } catch (err: any) {
-      fastify.log.error(err);
-      return reply.code(500).send({ error: err.message || "Quiz generation failed" });
+    const { topic } = req.body as {
+      topic?: string;
+    };
+    const quizTopic = topic || "carbon footprint";
+    const result = await generateQuiz(quizTopic);
+    if (!result.success) {
+      return reply.code(500).send({ error: result.message });
     }
+    return reply.code(200).send({ quiz: result.data });
   });
 };
 
-export default quizRoutes;
+export default routes;
