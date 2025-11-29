@@ -365,7 +365,32 @@ function App() {
                     </div>
                   </>
                 ) : (
-                  <p>Your leaderboard component will go here</p>
+                  <div className="pp-leaderboard-card">
+                    {/* Header */}
+                    <div className="pp-leaderboard-header">
+                      <span className="pp-leaderboard-icon">🏆</span>
+                      <h3 className="pp-leaderboard-title">Top Planet Point Earners</h3>
+                    </div>
+
+                    {/* Leaderboard Table */}
+                    <div className="pp-leaderboard-table">
+                      {[
+                        { rank: 1, emoji: "🥇", name: "EcoHero_21", points: 482.5 },
+                        { rank: 2, emoji: "🥈", name: "GreenMachine", points: 440.0 },
+                        { rank: 3, emoji: "🥉", name: "RecycleKing", points: 402.2 },
+                        { rank: 4, emoji: "4", name: "EarthSaver", points: 380.3 },
+                        { rank: 5, emoji: "5", name: "SolarSam", points: 360.7 },
+                      ].map((player) => (
+                        <div key={player.rank} className="pp-leaderboard-row">
+                          <div className="pp-leaderboard-rank">{player.emoji}</div>
+                          <div className="pp-leaderboard-name">{player.name}</div>
+                          <div className="pp-leaderboard-points">
+                            {player.points.toFixed(1)} pts
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
