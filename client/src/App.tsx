@@ -20,6 +20,7 @@ function App() {
   const [tempUnit, setTempUnit] = useState<"F" | "C">("F");
   const [totalPoints, setTotalPoints] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   // ------------------ AUTH CHECK ------------------
   const checkAuthStatus = async () => {
@@ -119,9 +120,34 @@ function App() {
     }
   };
 
-  useEffect(() => {
+  const fetchLeaderboard = async () => {
+    try {
+      const today = new Date();
+      const dateFrom = new Date(today);
+      dateFrom.setDate(today.getDate() - 7); // or 30 days, depending on what you want
+
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/activities/get-leaderboard`,
+        {
+          params: {
+            dateFrom: dateFrom.toISOString(),
+            dateTo: today.toISOString(),
+          },
+          headers: { "x-api-key": import.meta.env.VITE_API_KEY || "" },
+          withCredentials: true,
+        }
+      );
+
+      setLeaderboard(res.data || []);
+    } catch (err) {
+      console.error("Error loading leaderboard:", err);
+    }
+  };
+
+    useEffect(() => {
     if (isLoggedIn && userId) {
       fetchDailyScore();
+      fetchLeaderboard();
     }
   }, [isLoggedIn, userId]);
 
@@ -374,21 +400,28 @@ function App() {
 
                     {/* Leaderboard Table */}
                     <div className="pp-leaderboard-table">
-                      {[
-                        { rank: 1, emoji: "🥇", name: "EcoHero_21", points: 482.5 },
-                        { rank: 2, emoji: "🥈", name: "GreenMachine", points: 440.0 },
-                        { rank: 3, emoji: "🥉", name: "RecycleKing", points: 402.2 },
-                        { rank: 4, emoji: "4", name: "EarthSaver", points: 380.3 },
-                        { rank: 5, emoji: "5", name: "SolarSam", points: 360.7 },
-                      ].map((player) => (
-                        <div key={player.rank} className="pp-leaderboard-row">
-                          <div className="pp-leaderboard-rank">{player.emoji}</div>
-                          <div className="pp-leaderboard-name">{player.name}</div>
-                          <div className="pp-leaderboard-points">
-                            {player.points.toFixed(1)} pts
+                      {leaderboard.length === 0 ? (
+                        <p className="pp-muted">No leaderboard data available.</p>
+                      ) : (
+                        leaderboard.map((player, index) => (
+                          <div key={player.userId} className="pp-leaderboard-row">
+                            <div className="pp-leaderboard-rank">
+                              {index === 0 ? "🥇" :
+                              index === 1 ? "🥈" :
+                              index === 2 ? "🥉" :
+                              index + 1}
+                            </div>
+
+                            <div className="pp-leaderboard-name">
+                              {player.username || player.name || "Unknown User"}
+                            </div>
+
+                            <div className="pp-leaderboard-points">
+                              {player.score.toFixed(0)} pts
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
