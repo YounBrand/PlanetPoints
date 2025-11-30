@@ -4,6 +4,7 @@ enum ActivityType {
   RecycleBoxes = "RecycleBoxes",
   RoomTemperature = "RoomTemperature",
   MilesTravelled = "MilesTravelled",
+  QuizCompleted = "QuizCompleted",
 }
 
 const isActivityType = (value: string): value is ActivityType => {
@@ -190,11 +191,20 @@ const getScore = async (
   if (!milesTravelledScore.success)
     return { success: false, message: milesTravelledScore.message };
 
+  const quizCompletedScore = await getActivityUnit(
+    userId,
+    ActivityType.QuizCompleted,
+    dateFrom,
+    dateTo
+  );
+  if(!quizCompletedScore.success)
+    return { success: false, message: quizCompletedScore.message }
+
   const tempDiff = Math.abs(roomTemperatureScore.score - 72);
   const tempScore = Math.max(0, 72 - tempDiff);
 
   const finalDailyScore =
-    recycleBoxesScore.score + tempScore + milesTravelledScore.score;
+    recycleBoxesScore.score + tempScore + milesTravelledScore.score + quizCompletedScore.score;
 
   return {
     success: true,
