@@ -21,6 +21,7 @@ function App() {
   const [tempUnit, setTempUnit] = useState<"F" | "C">("F");
   const [totalPoints, setTotalPoints] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
  
   const checkAuthStatus = async () => {
@@ -133,6 +134,34 @@ function App() {
   useEffect(() => {
     if (isLoggedIn && userId) {
       fetchScore();
+  const fetchLeaderboard = async () => {
+    try {
+      const today = new Date();
+      const dateFrom = new Date(today);
+      dateFrom.setDate(today.getDate() - 7); // or 30 days, depending on what you want
+
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/activities/get-leaderboard`,
+        {
+          params: {
+            dateFrom: dateFrom.toISOString(),
+            dateTo: today.toISOString(),
+          },
+          headers: { "x-api-key": import.meta.env.VITE_API_KEY || "" },
+          withCredentials: true,
+        }
+      );
+
+      setLeaderboard(res.data || []);
+    } catch (err) {
+      console.error("Error loading leaderboard:", err);
+    }
+  };
+
+    useEffect(() => {
+    if (isLoggedIn && userId) {
+      fetchDailyScore();
+      fetchLeaderboard();
     }
   }, [isLoggedIn, userId]);
 
@@ -376,7 +405,39 @@ function App() {
                     </div>
                   </>
                 ) : (
-                  <p>Your leaderboard component will go here</p>
+                  <div className="pp-leaderboard-card">
+                    {/* Header */}
+                    <div className="pp-leaderboard-header">
+                      <span className="pp-leaderboard-icon">🏆</span>
+                      <h3 className="pp-leaderboard-title">Top Planet Point Earners</h3>
+                    </div>
+
+                    {/* Leaderboard Table */}
+                    <div className="pp-leaderboard-table">
+                      {leaderboard.length === 0 ? (
+                        <p className="pp-muted">No leaderboard data available.</p>
+                      ) : (
+                        leaderboard.map((player, index) => (
+                          <div key={player.userId} className="pp-leaderboard-row">
+                            <div className="pp-leaderboard-rank">
+                              {index === 0 ? "🥇" :
+                              index === 1 ? "🥈" :
+                              index === 2 ? "🥉" :
+                              index + 1}
+                            </div>
+
+                            <div className="pp-leaderboard-name">
+                              {player.username || player.name || "Unknown User"}
+                            </div>
+
+                            <div className="pp-leaderboard-points">
+                              {player.score.toFixed(0)} pts
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
