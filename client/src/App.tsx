@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./App.css";
+import QuizComponent from "./components/QuizComponent";
 
 type Theme = "light" | "dark";
 type TabKey = "overview" | "dashboard" | "leaderboard" | "quizzes" | "account";
@@ -22,7 +23,7 @@ function App() {
   const [userId, setUserId] = useState<string | null>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
-  // ------------------ AUTH CHECK ------------------
+ 
   const checkAuthStatus = async () => {
     setIsCheckingAuth(true);
     try {
@@ -49,7 +50,7 @@ function App() {
       setIsCheckingAuth(false);
     }
   };
-  // ------------------------------------------------
+
 
   useEffect(() => {
     checkAuthStatus();
@@ -100,23 +101,32 @@ function App() {
     }
   };
 
-  const fetchDailyScore = async () => {
+
+  const fetchScore = async () => {
     if (!userId) return;
+
+    // Today’s date range
+    const todayFrom = new Date();
+    todayFrom.setHours(0, 0, 0, 0);
+
+    const todayTo = new Date();
+    todayTo.setHours(23, 59, 59, 999);
+
     try {
-      const today = new Date().toISOString();
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/activities/calculate-daily`,
+        `${import.meta.env.VITE_API_URL}/api/activities/calculate-score`,
         {
-          params: { userId, date: today },
-          headers: { "x-api-key": import.meta.env.VITE_API_KEY || "" },
-          withCredentials: true,
+          params: {
+            userId: userId,
+            dateFrom: todayFrom.toISOString(),
+            dateTo: todayTo.toISOString(),
+          },
         }
       );
-      if (res.status === 200) {
-        setTotalPoints(res.data.totalPoints ?? 0.0);
-      }
+
+      setTotalPoints(res.data); // backend returns just the score number
     } catch (err) {
-      console.error("Error fetching daily score:", err);
+      console.error("Failed to fetch score:", err);
     }
   };
 
@@ -146,7 +156,7 @@ function App() {
 
     useEffect(() => {
     if (isLoggedIn && userId) {
-      fetchDailyScore();
+      fetchScore();
       fetchLeaderboard();
     }
   }, [isLoggedIn, userId]);
@@ -179,7 +189,7 @@ function App() {
         );
 
         console.log("Activity logged to backend");
-        await fetchDailyScore();
+        await fetchScore();
       } catch (err) {
         console.error("Error logging activity:", err);
       }
@@ -445,7 +455,7 @@ function App() {
                     </div>
                   </>
                 ) : (
-                  <p>Your quizzes component will go here</p>
+                  <QuizComponent userId={userId} onQuizComplete={fetchScore} />
                 )}
               </div>
             )}
