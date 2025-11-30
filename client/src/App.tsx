@@ -130,10 +130,6 @@ function App() {
     }
   };
 
-
-  useEffect(() => {
-    if (isLoggedIn && userId) {
-      fetchScore();
   const fetchLeaderboard = async () => {
     try {
       const today = new Date();
@@ -160,7 +156,7 @@ function App() {
 
     useEffect(() => {
     if (isLoggedIn && userId) {
-      fetchDailyScore();
+      fetchScore();
       fetchLeaderboard();
     }
   }, [isLoggedIn, userId]);
