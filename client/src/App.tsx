@@ -190,6 +190,7 @@ function App() {
 
         console.log("Activity logged to backend");
         await fetchScore();
+        await fetchLeaderboard();
       } catch (err) {
         console.error("Error logging activity:", err);
       }
